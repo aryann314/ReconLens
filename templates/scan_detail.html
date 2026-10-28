@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% set eyebrow = "Stored investigation" %}
+{% block hero_sub %}<p class="hero-sub"><a class="hero-link" href="{{ url_for('pages.history') }}">← Back to scan history</a></p>{% endblock %}
+{% block content %}
+<section class="band band-black band-results">
+  <div class="container">
+    <section class="results" id="results" aria-live="polite">
+      <p class="muted">Loading scan…</p>
+    </section>
+  </div>
+</section>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/scan_detail.js') }}"></script>{% endblock %}

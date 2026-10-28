@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block hero %}
+<section class="page-hero hero-arc error-hero">
+  <div class="container">
+    <p class="eyebrow">Error {{ code }}</p>
+    <h1 class="page-title">{{ title }}</h1>
+    <p class="hero-sub">{{ message }}</p>
+    <a class="btn btn-primary btn-lg" href="{{ url_for('pages.index') }}">Go to the overview</a>
+  </div>
+</section>
+{% endblock %}

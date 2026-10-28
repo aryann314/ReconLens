@@ -1,0 +1,163 @@
+{%- from "icons.html" import icon -%}
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ title }} · ReconLens OSINT Dashboard</title>
+  <script src="{{ url_for('static', filename='js/theme-init.js') }}"></script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23E8000D'/%3E%3Ccircle cx='14' cy='14' r='7' fill='none' stroke='white' stroke-width='3'/%3E%3Cpath d='m19 19 6 6' stroke='white' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+</head>
+<body data-page="{{ page }}"
+      data-live-allowed="{{ 'true' if live_allowed else 'false' }}"
+      data-hibp="{{ 'true' if hibp_configured else 'false' }}"
+      data-vt="{{ 'true' if vt_configured else 'false' }}"
+      {% if scan_id %}data-scan-id="{{ scan_id }}"{% endif %}
+      {% if scan_type %}data-scan-type="{{ scan_type }}"{% endif %}>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  {# Red announcement strip: always says whether the data is fictional or real #}
+  <div class="mode-banner" id="mode-banner" hidden>
+    <p><span id="mode-banner-text"></span>
+      <a href="{{ url_for('pages.about') }}">Learn more</a></p>
+    <button type="button" class="banner-close" id="banner-close" aria-label="Hide this notice">{{ icon('close') }}</button>
+  </div>
+
+  <div class="utility-bar">
+    <a href="{{ url_for('pages.email') }}">Worried about a breach?</a>
+    <span aria-hidden="true">|</span>
+    <a href="{{ url_for('pages.history') }}">Scan history</a>
+    <span aria-hidden="true">|</span>
+    <a href="{{ url_for('pages.about') }}">Method &amp; ethics</a>
+    <span aria-hidden="true">|</span>
+    <a href="{{ url_for('pages.graph') }}">Investigation graph</a>
+  </div>
+
+  <header class="site-header" id="site-header">
+    <div class="navbar">
+      <button type="button" class="nav-icon menu-btn" id="menu-btn" aria-label="Open menu"
+              aria-controls="sidebar" aria-expanded="false">{{ icon('menu') }}</button>
+
+      <a class="brand" href="{{ url_for('pages.index') }}" aria-label="ReconLens home">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 32 32"><circle cx="13" cy="13" r="8"/><path d="m19 19 8 8"/><path d="M9 13h8M13 9v8"/></svg>
+        </span>
+        <span class="brand-text">RECONLENS</span>
+      </a>
+
+      <nav class="nav" id="sidebar" aria-label="Main">
+        <div class="nav-head">
+          <span class="brand-text">RECONLENS</span>
+          <button type="button" class="nav-icon" id="menu-close" aria-label="Close menu">{{ icon('close') }}</button>
+        </div>
+        <a href="{{ url_for('pages.index') }}" {% if page == 'dashboard' %}aria-current="page"{% endif %}>Overview</a>
+        <div class="nav-drop {% if page in ['domain', 'username', 'email', 'reputation'] %}is-current{% endif %}">
+          <button type="button" class="nav-drop-btn" aria-haspopup="true">Investigate {{ icon('chevron') }}</button>
+          <div class="nav-menu">
+            <a href="{{ url_for('pages.domain') }}" {% if page == 'domain' %}aria-current="page"{% endif %}>
+              <span class="nav-menu-ic">{{ icon('domain') }}</span>
+              <span><b>Domain intelligence</b><small>Registration, DNS, email security, subdomains, TLS</small></span></a>
+            <a href="{{ url_for('pages.username') }}" {% if page == 'username' %}aria-current="page"{% endif %}>
+              <span class="nav-menu-ic">{{ icon('username') }}</span>
+              <span><b>Username footprint</b><small>One handle across 19 public platforms</small></span></a>
+            <a href="{{ url_for('pages.email') }}" {% if page == 'email' %}aria-current="page"{% endif %}>
+              <span class="nav-menu-ic">{{ icon('email') }}</span>
+              <span><b>Email exposure</b><small>Known breaches via Have I Been Pwned</small></span></a>
+            <a href="{{ url_for('pages.reputation') }}" {% if page == 'reputation' %}aria-current="page"{% endif %}>
+              <span class="nav-menu-ic">{{ icon('reputation') }}</span>
+              <span><b>IP &amp; URL reputation</b><small>Security-vendor verdicts from VirusTotal</small></span></a>
+          </div>
+        </div>
+        <a href="{{ url_for('pages.graph') }}" {% if page == 'graph' %}aria-current="page"{% endif %}>Investigation graph</a>
+        <a href="{{ url_for('pages.history') }}" {% if page == 'history' %}aria-current="page"{% endif %}>Scan history</a>
+        <a href="{{ url_for('pages.about') }}" {% if page == 'about' %}aria-current="page"{% endif %}>Method &amp; ethics</a>
+        <p class="nav-note">Passive OSINT only. Analyse assets you own or are permitted to assess.</p>
+      </nav>
+
+      <div class="top-actions">
+        <button type="button" class="nav-icon" id="search-btn" aria-label="Search (press /)" title="Search (press /)">{{ icon('search') }}</button>
+        <div class="mode-switch" role="radiogroup" aria-label="Data mode">
+          <button type="button" role="radio" data-mode="demo" aria-checked="true">Demo</button>
+          <button type="button" role="radio" data-mode="live" aria-checked="false"
+                  {% if not live_allowed %}disabled title="Live mode is disabled on this server"{% endif %}>Live</button>
+        </div>
+        <button type="button" class="nav-icon" id="theme-btn" aria-label="Switch light or dark theme" title="Switch theme">{{ icon('theme') }}</button>
+        <a class="btn btn-primary nav-cta" href="{{ url_for('pages.index') }}#investigate">Start investigating {{ icon('arrow') }}</a>
+      </div>
+    </div>
+
+    {% if page != 'dashboard' %}
+    <form class="quick-search" id="quick-search" role="search" autocomplete="off">
+      <div class="container quick-search-row">
+        {{ icon('search') }}
+        <label class="sr-only" for="quick-q">Quick investigate</label>
+        <input id="quick-q" type="text" spellcheck="false" placeholder="Investigate a domain, email, IP / URL or username">
+        <span class="detect-tag" id="quick-detect" hidden></span>
+        <kbd aria-hidden="true">Enter</kbd>
+      </div>
+    </form>
+    {% endif %}
+  </header>
+  <div class="scrim" id="scrim" hidden></div>
+
+  <main id="main">
+    {% block hero %}
+    <section class="page-hero hero-arc">
+      <div class="container">
+        {% if eyebrow is defined %}<p class="eyebrow">{{ eyebrow }}</p>{% endif %}
+        <h1 class="page-title">{{ title }}</h1>
+        {% block hero_sub %}{% endblock %}
+      </div>
+    </section>
+    {% endblock %}
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="footer">
+    <div class="container footer-grid">
+      <div>
+        <a class="brand brand-footer" href="{{ url_for('pages.index') }}">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 32 32"><circle cx="13" cy="13" r="8"/><path d="m19 19 8 8"/><path d="M9 13h8M13 9v8"/></svg>
+          </span>
+          <span class="brand-text">RECONLENS</span>
+        </a>
+        <p class="footer-tag">OSINT-based dashboard for digital footprint analysis and cybersecurity.
+          Passive, authorised intelligence only.</p>
+      </div>
+      <div>
+        <p class="footer-head">Investigate</p>
+        <a href="{{ url_for('pages.domain') }}">Domain intelligence</a>
+        <a href="{{ url_for('pages.username') }}">Username footprint</a>
+        <a href="{{ url_for('pages.email') }}">Email exposure</a>
+        <a href="{{ url_for('pages.reputation') }}">IP &amp; URL reputation</a>
+      </div>
+      <div>
+        <p class="footer-head">Correlate</p>
+        <a href="{{ url_for('pages.graph') }}">Investigation graph</a>
+        <a href="{{ url_for('pages.history') }}">Scan history</a>
+        <a href="{{ url_for('pages.about') }}">Method &amp; ethics</a>
+      </div>
+      <div>
+        <p class="footer-head">Project</p>
+        <p class="footer-small">B.E. Computer Science · Minor Discipline Course, Cybersecurity</p>
+        <p class="footer-small">Aryan Sharma · Varun Sharma</p>
+      </div>
+    </div>
+    <div class="container footer-base">
+      <span>© ReconLens · Academic prototype</span>
+      <span>Data from RDAP/WHOIS, DNS, crt.sh, Have I Been Pwned and VirusTotal is subject to each provider's terms.</span>
+    </div>
+  </footer>
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+  <script src="{{ url_for('static', filename='js/vendor/chart.umd.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/vendor/cytoscape.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/common.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/search.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/graph.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/render.js') }}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% set eyebrow = "Correlate" %}
+{% block hero_sub %}<p class="hero-sub">Merge stored scans into one map. Entities found by more than one
+  scan - the same domain, IP, provider or certificate authority - become the links between them.</p>{% endblock %}
+{% block content %}
+<section class="band band-black">
+  <div class="container">
+    <div class="graph-page">
+      <aside class="panel case-panel">
+        <div class="panel-head"><h2 class="panel-title">Scans in this graph</h2></div>
+        <p class="muted small">Tick scans to merge them. Shared entities are drawn with a double ring.</p>
+        <div class="case-actions">
+          <button type="button" class="btn btn-small" id="case-all">Select all</button>
+          <button type="button" class="btn btn-small" id="case-none">Clear</button>
+        </div>
+        <ul class="case-list" id="case-list"><li class="muted">Loading scans…</li></ul>
+      </aside>
+      <div class="case-main">
+        <div class="case-stats" id="case-stats"></div>
+        <div id="case-graph"></div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/case_graph.js') }}"></script>{% endblock %}

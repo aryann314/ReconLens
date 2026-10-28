@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+{% from "icons.html" import icon %}
+
+{% block hero %}
+<section class="hero hero-arc" id="investigate">
+  <div class="container hero-inner">
+    <div class="lockup" aria-hidden="true">
+      <span class="lockup-brand">
+        <span class="brand-mark"><svg viewBox="0 0 32 32"><circle cx="13" cy="13" r="8"/><path d="m19 19 8 8"/><path d="M9 13h8M13 9v8"/></svg></span>
+        RECONLENS
+      </span>
+      <span class="lockup-sep"></span>
+      <span class="lockup-tag">Passive OSINT</span>
+    </div>
+    <h1 class="hero-title">What does the internet already know about you?</h1>
+    <p class="hero-sub">Type one domain, email, IP / URL or username. ReconLens detects what it is,
+      gathers public intelligence, maps how it connects and scores your exposure.</p>
+
+    <form class="big-search" id="hero-search" role="search" autocomplete="off">
+      <label class="sr-only" for="hero-q">Target to investigate</label>
+      <div class="big-search-field">
+        {{ icon('search') }}
+        <input id="hero-q" type="text" spellcheck="false" placeholder="demo-corp.test">
+        <button type="submit" class="btn btn-primary btn-lg">Investigate {{ icon('arrow') }}</button>
+      </div>
+      <div class="detect-row" id="hero-detect" aria-live="polite">
+        <span>Detected type</span>
+        <div class="type-pills" id="hero-types" role="radiogroup" aria-label="Investigation type"></div>
+      </div>
+    </form>
+  </div>
+
+  <div class="container">
+    <div class="glass-strip">
+      <p class="glass-strip-label">Try a fictional sample investigation · works offline in Demo mode</p>
+      <div class="sample-grid" id="samples"></div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block content %}
+<section class="band band-platform">
+  <div class="container center">
+    <h2 class="display">ReconLens Dashboard:<br><span>One map of everything public about a target</span></h2>
+    <p class="lead">Registration records, DNS, certificate logs, public profiles, breach data and
+      vendor reputation - collected passively, labelled by certainty and scored transparently.</p>
+    <p class="lead">Collect once, correlate everywhere. Every entity becomes a node, and scans that
+      share one become linked.</p>
+
+    <div class="kpi-strip" aria-label="Key figures">
+      <div class="kpi"><span class="kpi-value" id="kpi-total">–</span><span class="kpi-label">Scans stored</span></div>
+      <div class="kpi"><span class="kpi-value" id="kpi-avg">–</span><span class="kpi-label">Average exposure</span></div>
+      <div class="kpi"><span class="kpi-value" id="kpi-nodes">–</span><span class="kpi-label">Entities mapped</span></div>
+      <div class="kpi"><span class="kpi-value" id="kpi-shared">–</span><span class="kpi-label">Links between scans</span></div>
+    </div>
+
+    <div class="module-grid">
+      <a class="module-card" href="{{ url_for('pages.domain') }}">
+        <span class="module-ic">{{ icon('domain') }}</span>
+        <span class="module-kicker">Module 01</span>
+        <b>Domain intelligence</b>
+        <small>Registration, DNS, SPF / DMARC, subdomains from certificate logs and the TLS certificate.</small>
+        <span class="more">Analyse a domain {{ icon('arrow') }}</span></a>
+      <a class="module-card" href="{{ url_for('pages.username') }}">
+        <span class="module-ic">{{ icon('username') }}</span>
+        <span class="module-kicker">Module 02</span>
+        <b>Username footprint</b>
+        <small>Public profiles of one handle across 19 platforms, with honest certainty labels.</small>
+        <span class="more">Check a handle {{ icon('arrow') }}</span></a>
+      <a class="module-card" href="{{ url_for('pages.email') }}">
+        <span class="module-ic">{{ icon('email') }}</span>
+        <span class="module-kicker">Module 03</span>
+        <b>Email exposure</b>
+        <small>Known data breaches and the kinds of data leaked, via Have I Been Pwned.</small>
+        <span class="more">Check an address {{ icon('arrow') }}</span></a>
+      <a class="module-card" href="{{ url_for('pages.reputation') }}">
+        <span class="module-ic">{{ icon('reputation') }}</span>
+        <span class="module-kicker">Module 04</span>
+        <b>IP &amp; URL reputation</b>
+        <small>Existing security-vendor verdicts from VirusTotal. Nothing is ever submitted.</small>
+        <span class="more">Check reputation {{ icon('arrow') }}</span></a>
+    </div>
+  </div>
+</section>
+
+<section class="band band-black">
+  <div class="container center">
+    <h2 class="display">Turning public data into defensive action</h2>
+    <p class="lead lead-wide">The <strong>ReconLens method</strong> follows the intelligence cycle: plan, collect,
+      process, analyse and report. Every result is labelled <strong>Confirmed, Not found, Inconclusive
+      or Error</strong>, only confirmed findings add points, and each problem becomes a
+      <strong>prioritised recommendation</strong> the owner can act on today.</p>
+    <a class="btn btn-primary btn-lg" href="{{ url_for('pages.about') }}">Learn more {{ icon('arrow') }}</a>
+    <div class="pill-strip">
+      <span>Passive only</span><i></i><span>Certainty labels</span><i></i><span>Transparent score</span><i></i>
+      <span>Privacy by design</span><i></i><span>Offline demo mode</span>
+    </div>
+  </div>
+</section>
+
+<section class="band band-black band-figures">
+  <div class="container center">
+    <h2 class="display">Exposure at a glance</h2>
+  </div>
+  <div class="fig-carousel" id="fig-carousel">
+    <div class="fig-track" id="fig-track">
+      <article class="fig-slide" data-index="0">
+        <div class="fig-frame">
+          <figure class="figure">
+            <figcaption>Figure 1: Exposure score of recent scans</figcaption>
+            <div class="chart-box"><canvas id="chart-scores" role="img" aria-label="Exposure score of recent scans"></canvas></div>
+          </figure>
+          <h3>Every scan scored from 0 to 100 - and every point explained</h3>
+          <a class="btn btn-primary" href="{{ url_for('pages.history') }}">Open scan history {{ icon('arrow') }}</a>
+        </div>
+      </article>
+      <article class="fig-slide" data-index="1">
+        <div class="fig-frame">
+          <figure class="figure">
+            <figcaption>Figure 2: How certain are all findings?</figcaption>
+            <div class="chart-box"><canvas id="chart-status" role="img" aria-label="Findings by certainty"></canvas></div>
+          </figure>
+          <h3>Blocked or unclear results are never counted as found</h3>
+          <a class="btn btn-primary" href="{{ url_for('pages.about') }}">How results are labelled {{ icon('arrow') }}</a>
+        </div>
+      </article>
+      <article class="fig-slide" data-index="2">
+        <div class="fig-frame">
+          <figure class="figure">
+            <figcaption>Figure 3: Scans by exposure level</figcaption>
+            <div class="chart-box"><canvas id="chart-levels" role="img" aria-label="Scans by exposure level"></canvas></div>
+          </figure>
+          <h3>Low, Moderate, High or Critical - at a glance</h3>
+          <a class="btn btn-primary" href="{{ url_for('pages.history') }}">Review the riskiest scans {{ icon('arrow') }}</a>
+        </div>
+      </article>
+      <article class="fig-slide" data-index="3">
+        <div class="fig-frame">
+          <figure class="figure">
+            <figcaption>Figure 4: Scans by investigation module</figcaption>
+            <div class="chart-box"><canvas id="chart-types" role="img" aria-label="Scans by module"></canvas></div>
+          </figure>
+          <h3>Correlate domains, people, breaches and reputation in one graph</h3>
+          <a class="btn btn-primary" href="{{ url_for('pages.graph') }}">Open investigation graph {{ icon('arrow') }}</a>
+        </div>
+      </article>
+    </div>
+    <div class="fig-dots" role="tablist" aria-label="Choose a figure" id="fig-dots"></div>
+  </div>
+</section>
+
+<section class="band band-platform band-tight">
+  <div class="container">
+    <div class="section-title-row">
+      <h2 class="display display-sm">Recent scans</h2>
+      <a href="{{ url_for('pages.history') }}" class="btn btn-ghost">View all {{ icon('arrow') }}</a>
+    </div>
+    <div id="recent"></div>
+  </div>
+</section>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>{% endblock %}

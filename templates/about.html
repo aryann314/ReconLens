@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% set eyebrow = "How it works" %}
+{% block hero_sub %}<p class="hero-sub">Passive intelligence, honest certainty labels, a transparent score
+  and privacy by design - the rules every ReconLens scan follows.</p>{% endblock %}
+{% block content %}
+<section class="band band-black">
+<div class="container">
+<article class="prose">
+  <h2>What this tool does - and does not do</h2>
+  <p>The dashboard performs <strong>passive</strong> open-source intelligence: it reads
+    information that is already public (DNS, registration data, certificate-transparency logs,
+    public profile pages) or available through authorised APIs (Have I Been Pwned, VirusTotal).
+    It never port-scans, probes for vulnerabilities, attempts logins, or bypasses CAPTCHAs,
+    access controls or platform restrictions.</p>
+
+  <p>The one exception is the TLS check: like any web browser, it opens a single HTTPS handshake
+    on port 443 to read the certificate the site presents, then closes the connection.
+    Hosts that resolve to private or internal addresses are never contacted.</p>
+
+  <h2>How the relationship graph works</h2>
+  <p>Every confirmed item becomes a node (domain, IP address, server, subdomain, certificate
+    authority, third-party service, account, breach, data type or risk issue) and every
+    relationship becomes a labelled edge. Nodes have a canonical identity, so when two scans
+    discover the same entity they share one node. The investigation graph merges stored
+    scans this way, which is how separate findings are correlated.</p>
+
+  <h2>How results are labelled</h2>
+  <dl class="legend-list">
+    <div><dt><span class="pill st-confirmed">Confirmed</span></dt>
+      <dd>The source positively reported this observation.</dd></div>
+    <div><dt><span class="pill st-inconclusive">Inconclusive</span></dt>
+      <dd>We could not tell: blocked, rate-limited, redacted or ambiguous. Never counted as found.</dd></div>
+    <div><dt><span class="pill st-not_found">Not found</span></dt>
+      <dd>The source answered and reported nothing.</dd></div>
+    <div><dt><span class="pill st-error">Error</span></dt>
+      <dd>The source could not be reached or returned an invalid response.</dd></div>
+  </dl>
+
+  <h2>Exposure score</h2>
+  <p>The score is the sum of severity weights of <strong>confirmed</strong> findings, capped
+    at 100: high 20, medium 10, low 4, informational 0. Inconclusive, not-found and failed
+    lookups add nothing. Levels: 0-19 Low, 20-49 Moderate, 50-74 High, 75-100 Critical.
+    Every scan shows exactly which findings produced its score.</p>
+
+  <h2>Safeguards built into the application</h2>
+  <ul>
+    <li>Live lookups require ticking an authorisation statement for that specific target; the
+      server rejects live requests without it and stores the statement with the scan.</li>
+    <li>Demo mode uses only fictional targets on the reserved <code>.test</code> domain, so the
+      application can be presented without querying anyone real.</li>
+    <li>Email checks: the address is sent only to Have I Been Pwned; it is stored, logged and
+      reported in masked form. Optional <code>AUTHORIZED_EMAIL_DOMAINS</code> restricts live
+      checks to your organisation.</li>
+    <li>API keys live in the <code>.env</code> file, never in source code or reports.</li>
+    <li>Rate limiting on every scan endpoint, per-source timeouts, and a local guard for the
+      VirusTotal free-tier quota.</li>
+    <li>Strict input validation; private and internal IP addresses are rejected.</li>
+    <li>Content-Security-Policy and other security headers; third-party data is always
+      rendered as text, never as HTML. CSV exports are protected against formula injection.</li>
+    <li>Stored scans are deleted after the retention period and can be deleted at any time.</li>
+  </ul>
+
+  <h2>Data sources</h2>
+  <ul>
+    <li>RDAP via the IANA bootstrap registry, with WHOIS (port 43) fallback for TLDs without RDAP.</li>
+    <li>DNS via the operating system's resolver (dnspython).</li>
+    <li>crt.sh certificate-transparency search.</li>
+    <li>TLS certificate of the domain, read with Python's standard <code>ssl</code> module.</li>
+    <li>Public profile pages and public APIs of the platforms in <code>collectors/sites.json</code>
+      (detection approach adapted from the open-source Sherlock project).</li>
+    <li>Have I Been Pwned API v3 (paid key, or the official test key for test addresses).</li>
+    <li>VirusTotal API v3, free community tier.</li>
+  </ul>
+</article>
+</div>
+</section>
+{% endblock %}

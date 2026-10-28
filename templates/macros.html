@@ -1,0 +1,56 @@
+{#
+  macros.html - the scan form shared by the four analysis pages.
+  Keeping it in one macro guarantees every module enforces the same
+  authorisation notice and demo-target behaviour.
+  Import it "with context" so the page title is available.
+#}
+{% from "icons.html" import icon %}
+{% macro scan_form(scan_type, label, placeholder, hint, sources) %}
+<section class="page-hero hero-arc module-hero">
+  <div class="container module-hero-grid">
+    <div class="module-hero-copy">
+      <p class="eyebrow">{{ icon(scan_type) }} Investigate</p>
+      <h1 class="page-title">{{ title }}</h1>
+      <p class="lede">{{ caller() }}</p>
+      <p class="sources"><b>Sources</b> {{ sources }}</p>
+    </div>
+
+    <form class="scan-form glass-card" id="scan-form" data-scan-type="{{ scan_type }}" novalidate>
+      <label for="target" class="field-label">{{ label }}</label>
+      <div class="field-row">
+        <input id="target" name="target" type="text" autocomplete="off" spellcheck="false"
+               placeholder="{{ placeholder }}" required maxlength="2048"
+               aria-describedby="target-hint target-error">
+        <button type="submit" class="btn btn-primary" id="run-btn">Run analysis</button>
+      </div>
+      <p class="field-hint" id="target-hint">{{ hint }}</p>
+      <p class="field-error" id="target-error" role="alert" hidden></p>
+
+      <div class="demo-targets" id="demo-targets">
+        <span class="demo-targets-label">Fictional demo targets</span>
+        <div class="chips" id="demo-chips"></div>
+      </div>
+
+      <div class="auth-notice" id="auth-notice" hidden>
+        <label class="check">
+          <input type="checkbox" id="authorized">
+          <span>I own this {{ scan_type if scan_type != 'reputation' else 'target' }} or have explicit permission
+            to assess it. I will use the results only for defensive purposes and in line with
+            applicable laws and the terms of the services queried.</span>
+        </label>
+      </div>
+    </form>
+  </div>
+</section>
+
+<section class="band band-black band-results">
+  <div class="container">
+    <section class="results" id="results" aria-live="polite"></section>
+    <div class="results-empty" id="results-empty">
+      <p class="display display-sm">Results appear here</p>
+      <p class="muted">Pick a fictional demo target above and press <b>Run analysis</b>. The exposure score,
+        relationship graph, findings and recommended actions will appear in this space.</p>
+    </div>
+  </div>
+</section>
+{% endmacro %}

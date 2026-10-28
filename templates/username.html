@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% from "macros.html" import scan_form with context %}
+{% set scan_type = "username" %}
+{% block hero %}{% endblock %}
+{% block content %}
+{% call scan_form("username", "Username", "your_handle",
+    "Letters, digits, '.', '_' and '-'. Check your own handle.",
+    "19 public platforms listed in collectors/sites.json") %}
+  Where a handle has a public profile. Results are split into confirmed, not found and
+  inconclusive - a blocked or rate-limited request is never counted as an account.
+{% endcall %}
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/scan_form.js') }}"></script>{% endblock %}

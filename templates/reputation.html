@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% from "macros.html" import scan_form with context %}
+{% set scan_type = "reputation" %}
+{% block hero %}{% endblock %}
+{% block content %}
+{% call scan_form("reputation", "Domain, public IP or URL", "example.com  or  203.0.113.5  or  https://example.com/login",
+    ("VirusTotal key configured (free tier: 4 lookups per minute)." if vt_configured else
+     "No VirusTotal key configured: live lookups are unavailable until VIRUSTOTAL_API_KEY is set in .env."),
+    "VirusTotal API v3 (existing reports only - nothing is submitted)") %}
+  What security vendors currently say about a domain, IP address or URL. Reputation is
+  aggregated opinion, not proof of malicious activity.
+{% endcall %}
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/scan_form.js') }}"></script>{% endblock %}

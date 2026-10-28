@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% from "macros.html" import scan_form with context %}
+{% set scan_type = "domain" %}
+{% block hero %}{% endblock %}
+{% block content %}
+{% call scan_form("domain", "Domain name", "example.com",
+    "Enter a domain you own or administer. URLs are accepted; only the host name is used.",
+    "RDAP (WHOIS fallback), public DNS, crt.sh certificate transparency, TLS certificate") %}
+  What anyone can learn about a domain from public records: who registered it and when,
+  where it is hosted, whether its email is protected against spoofing, which subdomains
+  appear in public certificate logs, and whether its HTTPS certificate is healthy.
+{% endcall %}
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/scan_form.js') }}"></script>{% endblock %}

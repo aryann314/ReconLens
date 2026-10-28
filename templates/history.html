@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% set eyebrow = "Correlate" %}
+{% block hero_sub %}<p class="hero-sub">Every stored investigation, newest first. Open one to see the full
+  result, or delete it - scans are also removed automatically after the retention period.</p>{% endblock %}
+{% block content %}
+<section class="band band-black">
+  <div class="container">
+    <section class="panel">
+      <div class="panel-head wrap">
+        <div class="filters">
+          <label class="search-field">
+            <span class="sr-only">Filter by target</span>
+            <input type="search" id="filter-text" placeholder="Filter by target…">
+          </label>
+          <div class="seg" role="radiogroup" aria-label="Module filter" id="filter-type">
+            <button type="button" role="radio" aria-checked="true" data-type="">All</button>
+            <button type="button" role="radio" aria-checked="false" data-type="domain">Domain</button>
+            <button type="button" role="radio" aria-checked="false" data-type="username">Username</button>
+            <button type="button" role="radio" aria-checked="false" data-type="email">Email</button>
+            <button type="button" role="radio" aria-checked="false" data-type="reputation">Reputation</button>
+          </div>
+        </div>
+      </div>
+      <div id="history-table"></div>
+    </section>
+  </div>
+</section>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/history.js') }}"></script>{% endblock %}
