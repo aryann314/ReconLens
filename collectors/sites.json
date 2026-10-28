@@ -1,0 +1,24 @@
+{
+  "_comment": "Curated platforms for username checks. Detection approach adapted from the open-source Sherlock project. method=status_code: found_codes => exists, not_found_codes => absent. method=message: HTTP 200 + absent_text in body => absent, HTTP 200 without it => exists. Anything else is inconclusive. Platforms that require login or aggressively block automated requests (Instagram, X/Twitter, LinkedIn, Facebook) are intentionally excluded.",
+  "sites": [
+    {"name": "GitHub", "category": "Developer", "url": "https://github.com/{}", "profile_url": "https://github.com/{}", "method": "status_code"},
+    {"name": "GitLab", "category": "Developer", "url": "https://gitlab.com/api/v4/users?username={}", "profile_url": "https://gitlab.com/{}", "method": "message", "absent_text": "[]", "absent_exact": true},
+    {"name": "Codeberg", "category": "Developer", "url": "https://codeberg.org/api/v1/users/{}", "profile_url": "https://codeberg.org/{}", "method": "status_code"},
+    {"name": "Docker Hub", "category": "Developer", "url": "https://hub.docker.com/v2/users/{}/", "profile_url": "https://hub.docker.com/u/{}", "method": "status_code"},
+    {"name": "PyPI", "category": "Developer", "url": "https://pypi.org/user/{}/", "profile_url": "https://pypi.org/user/{}/", "method": "status_code"},
+    {"name": "npm", "category": "Developer", "url": "https://www.npmjs.com/~{}", "profile_url": "https://www.npmjs.com/~{}", "method": "status_code"},
+    {"name": "DEV Community", "category": "Developer", "url": "https://dev.to/{}", "profile_url": "https://dev.to/{}", "method": "status_code"},
+    {"name": "Hacker News", "category": "Community", "url": "https://hacker-news.firebaseio.com/v0/user/{}.json", "profile_url": "https://news.ycombinator.com/user?id={}", "method": "message", "absent_text": "null", "absent_exact": true},
+    {"name": "Reddit", "category": "Social", "url": "https://www.reddit.com/user/{}/about.json", "profile_url": "https://www.reddit.com/user/{}", "method": "status_code"},
+    {"name": "Wikipedia", "category": "Community", "url": "https://en.wikipedia.org/w/api.php?action=query&list=users&format=json&ususers={}", "profile_url": "https://en.wikipedia.org/wiki/User:{}", "method": "message", "absent_text": "\"missing\""},
+    {"name": "Mastodon (mastodon.social)", "category": "Social", "url": "https://mastodon.social/api/v1/accounts/lookup?acct={}", "profile_url": "https://mastodon.social/@{}", "method": "status_code"},
+    {"name": "Chess.com", "category": "Gaming", "url": "https://api.chess.com/pub/player/{}", "profile_url": "https://www.chess.com/member/{}", "method": "status_code", "not_found_codes": [404, 410]},
+    {"name": "Lichess", "category": "Gaming", "url": "https://lichess.org/api/user/{}", "profile_url": "https://lichess.org/@/{}", "method": "status_code"},
+    {"name": "Codeforces", "category": "Competitive programming", "url": "https://codeforces.com/api/user.info?handles={}", "profile_url": "https://codeforces.com/profile/{}", "method": "status_code", "not_found_codes": [400]},
+    {"name": "Duolingo", "category": "Education", "url": "https://www.duolingo.com/2017-06-30/users?username={}&fields=users", "profile_url": "https://www.duolingo.com/profile/{}", "method": "message", "absent_text": "\"users\":[]"},
+    {"name": "Steam Community", "category": "Gaming", "url": "https://steamcommunity.com/id/{}", "profile_url": "https://steamcommunity.com/id/{}", "method": "message", "absent_text": "The specified profile could not be found"},
+    {"name": "Minecraft (Mojang)", "category": "Gaming", "url": "https://api.mojang.com/users/profiles/minecraft/{}", "profile_url": "https://namemc.com/profile/{}", "method": "status_code", "not_found_codes": [404, 204]},
+    {"name": "Pastebin", "category": "Paste site", "url": "https://pastebin.com/u/{}", "profile_url": "https://pastebin.com/u/{}", "method": "status_code"},
+    {"name": "SoundCloud", "category": "Media", "url": "https://soundcloud.com/{}", "profile_url": "https://soundcloud.com/{}", "method": "status_code"}
+  ]
+}
