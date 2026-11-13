@@ -5,3 +5,4 @@ Flask-Limiter==4.1.1
 python-dotenv==1.2.3
 reportlab==5.0.1
 pytest==9.1.1
+streamlit==1.50.0
