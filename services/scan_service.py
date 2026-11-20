@@ -21,6 +21,7 @@ from collectors.rdap_collector import RdapCollector
 from collectors.tls_collector import TlsCollector
 from collectors.username_collector import UsernameCollector
 from collectors.vt_collector import VirusTotalCollector
+from collectors.urlhaus_collector import URLhausCollector
 
 from .recommendations import build_recommendations
 from .scoring import compute_score
