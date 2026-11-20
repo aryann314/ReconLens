@@ -44,7 +44,6 @@ def scan_config() -> dict:
     "HTTP_TIMEOUT",
     "CRTSH_TIMEOUT",
     "DNS_TIMEOUT",
-    "HIBP_API_KEY",
     "VIRUSTOTAL_API_KEY",
     "URLHAUS_AUTH_KEY",
 )
