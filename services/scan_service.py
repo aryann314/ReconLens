@@ -23,6 +23,7 @@ from collectors.tls_collector import TlsCollector
 from collectors.username_collector import UsernameCollector
 from collectors.vt_collector import VirusTotalCollector
 from collectors.urlhaus_collector import URLhausCollector
+from collectors.xposedornot_collector import XposedOrNotCollector
 
 from .recommendations import build_recommendations
 from .scoring import compute_score
@@ -36,9 +37,15 @@ COLLECTORS = {
         CrtshCollector,
         TlsCollector,
     ],
+
     "username": [
         UsernameCollector,
     ],
+
+    "email": [
+        XposedOrNotCollector,
+    ],
+
     "reputation": [
         VirusTotalCollector,
         URLhausCollector,
@@ -63,6 +70,13 @@ LIMITATIONS = {
         "Platforms that require login (e.g. Instagram, LinkedIn, X) are excluded by design.",
     ],
 
+    "email": [
+        "Email breach results are based on records indexed by XposedOrNot.",
+        "A not-found result does not guarantee that an email has never been exposed.",
+        "The free API has hourly and daily request limits.",
+        "Only check email addresses you own or are authorised to assess.",
+    ],
+
     "reputation": [
         "Reputation is aggregated vendor opinion, not confirmed malicious activity.",
         "Targets never analysed by VirusTotal return no data; we do not submit them.",
@@ -81,10 +95,15 @@ def run_collectors(scan_type: str, target: str, config: dict):
             f"No live collectors are configured for scan type: {scan_type}"
         )
 
-    collectors = [collector_class(config) for collector_class in collector_classes]
+    collectors = [
+        collector_class(config)
+        for collector_class in collector_classes
+    ]
 
     with ThreadPoolExecutor(max_workers=len(collectors)) as pool:
-        return list(pool.map(lambda collector: collector.run(target), collectors))
+        return list(
+            pool.map(lambda collector: collector.run(target), collectors)
+        )
 
 
 def run_scan(
@@ -98,20 +117,15 @@ def run_scan(
     if scan_type not in ("domain", "username", "email", "reputation"):
         raise ValueError(f"Unsupported scan type: {scan_type}")
 
-    # Email scanning is unavailable after removing Have I Been Pwned.
-    if scan_type == "email" and mode != "demo":
-        raise ValueError(
-            "Live email scanning is currently unavailable. "
-            "The email intelligence provider has been removed."
-        )
-
     started = utc_now()
     t0 = time.perf_counter()
 
     if mode == "demo":
         results = demo_data.get_demo_results(scan_type, target)
+
     elif mode == "live":
         results = run_collectors(scan_type, target, config)
+
     else:
         raise ValueError(f"Unsupported scan mode: {mode}")
 
@@ -123,26 +137,23 @@ def run_scan(
 
     scoring = compute_score(findings)
 
-    module_states = {result.status for result in results}
+    module_states = {
+        result.status
+        for result in results
+    }
 
     if not module_states or module_states <= {"error", "skipped"}:
         status = "failed"
+
     elif module_states & {"error", "skipped", "partial"}:
         status = "partial"
+
     else:
         status = "completed"
 
-    limitations = list(LIMITATIONS.get(scan_type, []))
+    limitations = list(LIMITATIONS[scan_type])
 
-    if scan_type == "email":
-        limitations = [
-            "DEMO MODE: email results are fictional and were not collected from a real breach database.",
-            "Live email breach checking is unavailable because the email intelligence provider has been removed.",
-            "Do not treat demo results as evidence that an email address has or has not been exposed.",
-            "Only check email addresses you own or are authorised to assess.",
-        ]
-
-    if mode == "demo" and scan_type != "email":
+    if mode == "demo":
         limitations.insert(
             0,
             "DEMO MODE: all data in this report is fictional and was not collected from any real source."
@@ -158,10 +169,18 @@ def run_scan(
         "authorization": authorization,
         "started_at": started,
         "completed_at": utc_now(),
-        "duration_ms": int((time.perf_counter() - t0) * 1000),
-        "modules": [result.summary() for result in results],
+        "duration_ms": int(
+            (time.perf_counter() - t0) * 1000
+        ),
+        "modules": [
+            result.summary()
+            for result in results
+        ],
         "findings": findings,
         "scoring": scoring,
-        "recommendations": build_recommendations(scan_type, findings),
+        "recommendations": build_recommendations(
+            scan_type,
+            findings
+        ),
         "limitations": limitations,
     }
