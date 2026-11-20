@@ -39,8 +39,15 @@ class ApiError(Exception):
 
 def scan_config() -> dict:
     """Plain-dict copy of the settings collectors need (they run in threads)."""
-    keys = ("USER_AGENT", "HTTP_TIMEOUT", "CRTSH_TIMEOUT", "DNS_TIMEOUT",
-            "HIBP_API_KEY", "VIRUSTOTAL_API_KEY")
+    keys = (
+    "USER_AGENT",
+    "HTTP_TIMEOUT",
+    "CRTSH_TIMEOUT",
+    "DNS_TIMEOUT",
+    "HIBP_API_KEY",
+    "VIRUSTOTAL_API_KEY",
+    "URLHAUS_AUTH_KEY",
+)
     return {k: current_app.config.get(k) for k in keys}
 
 
