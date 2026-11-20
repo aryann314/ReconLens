@@ -2,10 +2,10 @@
 """
 collectors/dns_collector.py
 
-Google Public DNS-over-HTTPS collector for ReconLens.
+Google + Cloudflare DNS-over-HTTPS collector for ReconLens.
 
-Queries public DNS records using Google's JSON API.
-No API key is required.
+Queries public DNS records using two independent DNS providers.
+No API keys are required.
 """
 
 from __future__ import annotations
@@ -17,11 +17,22 @@ from .base import BaseCollector, CollectorError, Finding
 
 
 GOOGLE_DNS_URL = "https://dns.google/resolve"
+CLOUDFLARE_DNS_URL = "https://cloudflare-dns.com/dns-query"
 
 RECORD_TYPES = ["A", "AAAA", "CNAME", "MX", "NS", "TXT", "CAA", "SOA"]
 
-# DNS numeric type codes returned by Google's JSON API
 DNS_TYPE_CODES = {
+    1: "A",
+    2: "NS",
+    5: "CNAME",
+    6: "SOA",
+    15: "MX",
+    16: "TXT",
+    28: "AAAA",
+    257: "CAA",
+}
+
+DNS_TYPE_NUMBERS = {
     "A": 1,
     "NS": 2,
     "CNAME": 5,
@@ -69,17 +80,15 @@ MX_PROVIDER_HINTS = {
 
 
 def clean_dns_value(rtype: str, value: str) -> str:
-    """Convert Google's DNS JSON data into readable record values."""
+    """Convert DNS JSON data into readable record values."""
 
     value = str(value).strip()
 
     if rtype == "TXT":
-        # Google's JSON API wraps TXT values in quotation marks.
         if len(value) >= 2 and value.startswith('"') and value.endswith('"'):
             value = value[1:-1]
 
         value = value.replace('\\"', '"').replace("\\\\", "\\")
-        return value
 
     if rtype in ("A", "AAAA"):
         return value
@@ -187,25 +196,38 @@ def analyse_dmarc(txt_records: list[str]) -> tuple[str, str, str]:
 class DnsCollector(BaseCollector):
 
     module = "dns"
-    source = "Google Public DNS (DNS-over-HTTPS)"
+    source = "Google + Cloudflare Public DNS"
 
     def __init__(self, config: dict):
         super().__init__(config)
         self.timeout = config.get("DNS_TIMEOUT", 10)
 
-    def source_url(self, name: str, rtype: str | None = None) -> str:
-        """Build a link to the Google DNS query."""
+    def source_url(
+        self,
+        name: str,
+        rtype: str | None = None,
+        provider: str = "google"
+    ) -> str:
+        """Build a public DNS query URL."""
 
         params = {"name": name}
 
         if rtype:
             params["type"] = rtype
 
+        if provider == "cloudflare":
+            return f"{CLOUDFLARE_DNS_URL}?{urlencode(params)}"
+
         return f"{GOOGLE_DNS_URL}?{urlencode(params)}"
 
-    def query(self, name: str, rtype: str):
+    def query_provider(
+        self,
+        name: str,
+        rtype: str,
+        provider: str
+    ):
         """
-        Query Google Public DNS.
+        Query a DNS provider.
 
         Returns:
             records: list of DNS record strings
@@ -213,20 +235,33 @@ class DnsCollector(BaseCollector):
             error: error code or None
         """
 
-        if rtype not in DNS_TYPE_CODES:
+        if rtype not in DNS_TYPE_NUMBERS:
             return [], None, "UNSUPPORTED_RECORD_TYPE"
+
+        if provider == "google":
+            endpoint = GOOGLE_DNS_URL
+            headers = {
+                "Accept": "application/dns-json"
+            }
+
+        elif provider == "cloudflare":
+            endpoint = CLOUDFLARE_DNS_URL
+            headers = {
+                "Accept": "application/dns-json"
+            }
+
+        else:
+            return [], None, "UNKNOWN_PROVIDER"
 
         try:
             response = self.http_get(
-                GOOGLE_DNS_URL,
+                endpoint,
                 params={
                     "name": name,
-                    "type": rtype,
+                    "type": rtype
                 },
-                headers={
-                    "Accept": "application/dns-json"
-                },
-                timeout=self.timeout,
+                headers=headers,
+                timeout=self.timeout
             )
 
             response.raise_for_status()
@@ -243,7 +278,6 @@ class DnsCollector(BaseCollector):
 
         status = payload.get("Status")
 
-        # DNS response status 3 means NXDOMAIN.
         if status == 3:
             return None, None, "NXDOMAIN"
 
@@ -254,15 +288,14 @@ class DnsCollector(BaseCollector):
                 4: "NOTIMP",
                 5: "REFUSED",
             }
+
             return [], None, error_names.get(
                 status, f"DNS_STATUS_{status}"
             )
 
         answers = payload.get("Answer", [])
-        expected_type = DNS_TYPE_CODES[rtype]
+        expected_type = DNS_TYPE_NUMBERS[rtype]
 
-        # Ignore unrelated records, such as CNAME records returned
-        # alongside an A-record lookup.
         matching = [
             answer for answer in answers
             if answer.get("type") == expected_type
@@ -285,6 +318,82 @@ class DnsCollector(BaseCollector):
         ttl = min(ttls) if ttls else None
 
         return records, ttl, None
+
+    def query(self, name: str, rtype: str):
+        """Keep the existing query interface using Google DNS."""
+
+        return self.query_provider(name, rtype, "google")
+
+    def compare_providers(self, domain: str):
+        """
+        Query both providers and compare their DNS records.
+
+        Google results remain the primary results used by the
+        existing ReconLens security checks.
+        """
+
+        comparison_rows = []
+        differences = []
+        cloudflare_errors = []
+
+        for rtype in RECORD_TYPES:
+
+            google_records, _, google_error = self.query_provider(
+                domain, rtype, "google"
+            )
+
+            cloudflare_records, _, cloudflare_error = self.query_provider(
+                domain, rtype, "cloudflare"
+            )
+
+            google_records = google_records or []
+            cloudflare_records = cloudflare_records or []
+
+            if google_error:
+                google_status = google_error
+            else:
+                google_status = (
+                    f"{len(google_records)} record(s)"
+                    if google_records else "No records"
+                )
+
+            if cloudflare_error:
+                cloudflare_status = cloudflare_error
+                cloudflare_errors.append(
+                    f"{rtype} ({cloudflare_error})"
+                )
+            else:
+                cloudflare_status = (
+                    f"{len(cloudflare_records)} record(s)"
+                    if cloudflare_records else "No records"
+                )
+
+            comparison_rows.append([
+                "Google DNS",
+                rtype,
+                ", ".join(google_records) or "-",
+                google_status
+            ])
+
+            comparison_rows.append([
+                "Cloudflare DNS",
+                rtype,
+                ", ".join(cloudflare_records) or "-",
+                cloudflare_status
+            ])
+
+            if not google_error and not cloudflare_error:
+
+                google_set = set(google_records)
+                cloudflare_set = set(cloudflare_records)
+
+                if google_set != cloudflare_set:
+                    differences.append(
+                        f"{rtype}: Google={sorted(google_set)}; "
+                        f"Cloudflare={sorted(cloudflare_set)}"
+                    )
+
+        return comparison_rows, differences, cloudflare_errors
 
     def collect(self, domain: str) -> list[Finding]:
 
@@ -310,7 +419,7 @@ class DnsCollector(BaseCollector):
                         title="Domain does not exist in DNS",
                         value="Google DNS returned NXDOMAIN.",
                         status="not_found",
-                        source_url=url,
+                        source_url=url
                     )
                 ]
 
@@ -336,18 +445,18 @@ class DnsCollector(BaseCollector):
                     title="Some record types could not be resolved",
                     value=", ".join(failed),
                     status="inconclusive",
-                    source_url=url,
+                    source_url=url
                 )
             )
 
         # -----------------------------------
-        # 2. Display all DNS records
+        # 2. Display Google DNS records
         # -----------------------------------
 
         out.append(
             self.finding(
                 code="DNS_RECORDS",
-                title="Public DNS records",
+                title="Public DNS records (Google)",
                 value=(
                     f"{len(rows)} records across "
                     f"{len([t for t in records if records[t]])} types"
@@ -356,14 +465,73 @@ class DnsCollector(BaseCollector):
                 details={
                     "table": {
                         "columns": ["Type", "Value", "TTL"],
-                        "rows": rows,
+                        "rows": rows
                     }
-                },
+                }
             )
         )
 
         # -----------------------------------
-        # 3. Hosting IP addresses
+        # 3. Compare Google and Cloudflare
+        # -----------------------------------
+
+        comparison_rows, differences, cloudflare_errors = (
+            self.compare_providers(domain)
+        )
+
+        out.append(
+            self.finding(
+                code="DNS_PROVIDER_COMPARISON",
+                title="DNS provider comparison",
+                value=(
+                    f"Compared Google DNS and Cloudflare DNS "
+                    f"for {len(RECORD_TYPES)} record types."
+                ),
+                source_url=url,
+                details={
+                    "table": {
+                        "columns": [
+                            "Provider",
+                            "Type",
+                            "Records",
+                            "Status"
+                        ],
+                        "rows": comparison_rows
+                    }
+                }
+            )
+        )
+
+        if differences:
+            out.append(
+                self.finding(
+                    code="DNS_PROVIDER_DIFFERENCE",
+                    title="DNS provider responses differ",
+                    value=(
+                        "The providers returned different DNS answers: "
+                        + " | ".join(differences)
+                    ),
+                    severity="low",
+                    status="inconclusive",
+                    source_url=url
+                )
+            )
+
+        if cloudflare_errors:
+            out.append(
+                self.finding(
+                    code="DNS_CLOUDFLARE_PARTIAL",
+                    title="Cloudflare DNS partial response",
+                    value=", ".join(cloudflare_errors),
+                    status="inconclusive",
+                    source_url=self.source_url(
+                        domain, provider="cloudflare"
+                    )
+                )
+            )
+
+        # -----------------------------------
+        # 4. Hosting IP addresses
         # -----------------------------------
 
         ips = records.get("A", []) + records.get("AAAA", [])
@@ -374,12 +542,12 @@ class DnsCollector(BaseCollector):
                     code="DNS_HOST_IPS",
                     title="Hosting IP addresses",
                     value=", ".join(ips),
-                    source_url=url,
+                    source_url=url
                 )
             )
 
         # -----------------------------------
-        # 4. Mail server information
+        # 5. Mail server information
         # -----------------------------------
 
         mx = records.get("MX", [])
@@ -407,7 +575,7 @@ class DnsCollector(BaseCollector):
                             if providers else ""
                         )
                     ),
-                    source_url=url,
+                    source_url=url
                 )
             )
 
@@ -417,12 +585,12 @@ class DnsCollector(BaseCollector):
                     code="DNS_NO_MX",
                     title="No MX records",
                     value="This domain does not advertise mail servers.",
-                    source_url=url,
+                    source_url=url
                 )
             )
 
         # -----------------------------------
-        # 5. Third-party services from TXT
+        # 6. Third-party services from TXT
         # -----------------------------------
 
         txt = records.get("TXT", [])
@@ -446,12 +614,12 @@ class DnsCollector(BaseCollector):
                             "TXT verification records can reveal third-party "
                             "services used by the organisation."
                         )
-                    },
+                    }
                 )
             )
 
         # -----------------------------------
-        # 6. SPF security analysis
+        # 7. SPF security analysis
         # -----------------------------------
 
         if "TXT" in records:
@@ -464,12 +632,12 @@ class DnsCollector(BaseCollector):
                     title="SPF (Sender Policy Framework)",
                     value=explanation,
                     severity=severity,
-                    source_url=url,
+                    source_url=url
                 )
             )
 
         # -----------------------------------
-        # 7. DMARC security analysis
+        # 8. DMARC security analysis
         # -----------------------------------
 
         dmarc_domain = f"_dmarc.{domain}"
@@ -488,7 +656,7 @@ class DnsCollector(BaseCollector):
                     title="DMARC (Domain-based Message Authentication)",
                     value=explanation,
                     severity=severity,
-                    source_url=self.source_url(dmarc_domain, "TXT"),
+                    source_url=self.source_url(dmarc_domain, "TXT")
                 )
             )
 
@@ -499,12 +667,12 @@ class DnsCollector(BaseCollector):
                     title="DMARC (Domain-based Message Authentication)",
                     value=f"Could not query DMARC record ({err}).",
                     status="inconclusive",
-                    source_url=self.source_url(dmarc_domain, "TXT"),
+                    source_url=self.source_url(dmarc_domain, "TXT")
                 )
             )
 
         # -----------------------------------
-        # 8. CAA security analysis
+        # 9. CAA security analysis
         # -----------------------------------
 
         caa = records.get("CAA", [])
@@ -519,7 +687,7 @@ class DnsCollector(BaseCollector):
                         "No CAA record was found. This does not restrict "
                         "certificate authorities through DNS CAA."
                     ),
-                    source_url=url,
+                    source_url=url
                 )
             )
 
@@ -530,7 +698,7 @@ class DnsCollector(BaseCollector):
                     code="DNS_CAA_OK",
                     title="CAA record present",
                     value="; ".join(caa),
-                    source_url=url,
+                    source_url=url
                 )
             )
 
