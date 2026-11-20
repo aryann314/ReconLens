@@ -85,12 +85,12 @@ def create_app(test_config: dict | None = None) -> Flask:
 
     @app.context_processor
     def inject_flags():
-        return {
-            "live_allowed": app.config["ALLOW_LIVE_MODE"],
-            "hibp_configured": bool(app.config["HIBP_API_KEY"]),
-            "vt_configured": bool(app.config["VIRUSTOTAL_API_KEY"]),
-        }
-
+       return {
+    "live_allowed": app.config["ALLOW_LIVE_MODE"],
+    "hibp_configured": bool(app.config["HIBP_API_KEY"]),
+    "vt_configured": bool(app.config["VIRUSTOTAL_API_KEY"]),
+    "urlhaus_configured": bool(app.config["URLHAUS_AUTH_KEY"]),
+}
     @app.after_request
     def security_headers(resp):
         resp.headers["Content-Security-Policy"] = CSP
