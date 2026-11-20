@@ -1,12 +1,14 @@
+
 """
 services/scan_service.py - Orchestrates a scan.
 
-    input -> choose collectors -> run them in parallel (each with its own
-    timeout) -> merge findings -> score -> recommendations -> limitations
+    input -> choose collectors -> run them in parallel
+    -> merge findings -> score -> recommendations -> limitations
 
 The result is a plain dict; the route layer stores it in SQLite.
 To add a new OSINT source, write a collector and add it to COLLECTORS.
 """
+
 from __future__ import annotations
 
 import time
@@ -16,7 +18,6 @@ from collectors import demo_data
 from collectors.base import utc_now
 from collectors.crtsh_collector import CrtshCollector
 from collectors.dns_collector import DnsCollector
-from collectors.hibp_collector import HibpCollector
 from collectors.rdap_collector import RdapCollector
 from collectors.tls_collector import TlsCollector
 from collectors.username_collector import UsernameCollector
@@ -27,36 +28,41 @@ from .recommendations import build_recommendations
 from .scoring import compute_score
 from .validation import mask_email
 
+
 COLLECTORS = {
-    "domain": [RdapCollector, DnsCollector, CrtshCollector, TlsCollector],
-    "username": [UsernameCollector],
-    "email": [HibpCollector],
-    "reputation": [VirusTotalCollector, URLhausCollector],
+    "domain": [
+        RdapCollector,
+        DnsCollector,
+        CrtshCollector,
+        TlsCollector,
+    ],
+    "username": [
+        UsernameCollector,
+    ],
+    "reputation": [
+        VirusTotalCollector,
+        URLhausCollector,
+    ],
 }
+
 
 LIMITATIONS = {
     "domain": [
         "RDAP/WHOIS data may be redacted for privacy; missing fields are labelled, not guessed.",
         "Domain age is shown only when the registry publishes a registration date.",
-        "Hostnames from certificate-transparency logs may belong to systems that are no "
-        "longer online. They indicate past certificate issuance, not current exposure.",
+        "Hostnames from certificate-transparency logs may belong to systems that are no longer online. They indicate past certificate issuance, not current exposure.",
         "DNS answers reflect the resolver used at scan time and may be cached.",
-        "The TLS check performs one standard HTTPS handshake on port 443 (what any browser "
-        "does) to read the certificate. No other contact with the target is made.",
-        "No active scanning (ports, vulnerabilities) is performed - this is passive OSINT only.",
+        "The TLS check performs one standard HTTPS handshake on port 443 to read the certificate.",
+        "No active scanning (ports or vulnerabilities) is performed. This is passive OSINT only.",
     ],
+
     "username": [
         "Only the platforms listed in collectors/sites.json are checked.",
         "A matching username does not prove the accounts belong to the same person.",
-        "Platforms may block or rate-limit automated requests; such results are labelled "
-        "inconclusive and are never counted as found.",
+        "Platforms may block or rate-limit automated requests. Such results are labelled inconclusive and are never counted as found.",
         "Platforms that require login (e.g. Instagram, LinkedIn, X) are excluded by design.",
     ],
-    "email": [
-        "Results cover only breaches loaded into Have I Been Pwned.",
-        "'Not found' means HIBP holds no record - not that the address was never exposed.",
-        "Only check addresses you own or are authorised to assess.",
-    ],
+
     "reputation": [
         "Reputation is aggregated vendor opinion, not confirmed malicious activity.",
         "Targets never analysed by VirusTotal return no data; we do not submit them.",
@@ -68,35 +74,79 @@ LIMITATIONS = {
 
 
 def run_collectors(scan_type: str, target: str, config: dict):
-    collectors = [cls(config) for cls in COLLECTORS[scan_type]]
+    collector_classes = COLLECTORS.get(scan_type)
+
+    if not collector_classes:
+        raise ValueError(
+            f"No live collectors are configured for scan type: {scan_type}"
+        )
+
+    collectors = [collector_class(config) for collector_class in collector_classes]
+
     with ThreadPoolExecutor(max_workers=len(collectors)) as pool:
-        return list(pool.map(lambda c: c.run(target), collectors))
+        return list(pool.map(lambda collector: collector.run(target), collectors))
 
 
-def run_scan(scan_type: str, target: str, mode: str, config: dict,
-             authorization: str | None = None) -> dict:
+def run_scan(
+    scan_type: str,
+    target: str,
+    mode: str,
+    config: dict,
+    authorization: str | None = None,
+) -> dict:
+
+    if scan_type not in ("domain", "username", "email", "reputation"):
+        raise ValueError(f"Unsupported scan type: {scan_type}")
+
+    # Email scanning is unavailable after removing Have I Been Pwned.
+    if scan_type == "email" and mode != "demo":
+        raise ValueError(
+            "Live email scanning is currently unavailable. "
+            "The email intelligence provider has been removed."
+        )
+
     started = utc_now()
     t0 = time.perf_counter()
 
     if mode == "demo":
         results = demo_data.get_demo_results(scan_type, target)
-    else:
+    elif mode == "live":
         results = run_collectors(scan_type, target, config)
+    else:
+        raise ValueError(f"Unsupported scan mode: {mode}")
 
-    findings = [f.to_dict() for r in results for f in r.findings]
+    findings = [
+        finding.to_dict()
+        for result in results
+        for finding in result.findings
+    ]
+
     scoring = compute_score(findings)
-    module_states = {r.status for r in results}
-    if module_states <= {"error", "skipped"}:
+
+    module_states = {result.status for result in results}
+
+    if not module_states or module_states <= {"error", "skipped"}:
         status = "failed"
     elif module_states & {"error", "skipped", "partial"}:
         status = "partial"
     else:
         status = "completed"
 
-    limitations = list(LIMITATIONS[scan_type])
-    if mode == "demo":
-        limitations.insert(0, "DEMO MODE: all data in this report is fictional and was not "
-                              "collected from any real source.")
+    limitations = list(LIMITATIONS.get(scan_type, []))
+
+    if scan_type == "email":
+        limitations = [
+            "DEMO MODE: email results are fictional and were not collected from a real breach database.",
+            "Live email breach checking is unavailable because the email intelligence provider has been removed.",
+            "Do not treat demo results as evidence that an email address has or has not been exposed.",
+            "Only check email addresses you own or are authorised to assess.",
+        ]
+
+    if mode == "demo" and scan_type != "email":
+        limitations.insert(
+            0,
+            "DEMO MODE: all data in this report is fictional and was not collected from any real source."
+        )
 
     return {
         "scan_type": scan_type,
@@ -109,7 +159,7 @@ def run_scan(scan_type: str, target: str, mode: str, config: dict,
         "started_at": started,
         "completed_at": utc_now(),
         "duration_ms": int((time.perf_counter() - t0) * 1000),
-        "modules": [r.summary() for r in results],
+        "modules": [result.summary() for result in results],
         "findings": findings,
         "scoring": scoring,
         "recommendations": build_recommendations(scan_type, findings),
