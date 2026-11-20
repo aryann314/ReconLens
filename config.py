@@ -45,7 +45,9 @@ class Config:
 
     HIBP_API_KEY = os.getenv("HIBP_API_KEY", "").strip()
     VIRUSTOTAL_API_KEY = os.getenv("VIRUSTOTAL_API_KEY", "").strip()
-    AUTHORIZED_EMAIL_DOMAINS = _list("AUTHORIZED_EMAIL_DOMAINS")
+    URLHAUS_AUTH_KEY = os.getenv("URLHAUS_AUTH_KEY", "").strip()
+    AUTHORIZED_EMAIL_DOMAINS = _list("AUTHORIZED_EMAIL_DOMAINS"
+    
 
     USER_AGENT = os.getenv(
         "OSINT_USER_AGENT", "OSINT-Footprint-Dashboard/1.0 (academic project)"
