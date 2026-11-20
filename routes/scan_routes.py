@@ -31,6 +31,7 @@ def health():
         "virustotal_key_configured": bool(cfg["VIRUSTOTAL_API_KEY"]),
         "retention_days": cfg["RETENTION_DAYS"],
         "scan_rate_limit": cfg["SCAN_RATE_LIMIT"],
+        "urlhaus_key_configured": bool(cfg["URLHAUS_AUTH_KEY"]),
     })
 
 
