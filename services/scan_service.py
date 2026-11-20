@@ -61,6 +61,8 @@ LIMITATIONS = {
         "Reputation is aggregated vendor opinion, not confirmed malicious activity.",
         "Targets never analysed by VirusTotal return no data; we do not submit them.",
         "The free VirusTotal API is limited to 4 requests per minute and 500 per day.",
+        "URLhaus checks full URLs, not bare domains or IP addresses.",
+        "A URL not found in URLhaus is not guaranteed to be safe.",
     ],
 }
 
