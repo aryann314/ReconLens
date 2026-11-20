@@ -31,7 +31,7 @@ COLLECTORS = {
     "domain": [RdapCollector, DnsCollector, CrtshCollector, TlsCollector],
     "username": [UsernameCollector],
     "email": [HibpCollector],
-    "reputation": [VirusTotalCollector],
+    "reputation": [VirusTotalCollector, URLhausCollector],
 }
 
 LIMITATIONS = {
