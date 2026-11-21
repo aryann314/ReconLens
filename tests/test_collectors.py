@@ -11,7 +11,6 @@ import requests
 from collectors.base import BaseCollector
 from collectors.crtsh_collector import is_sensitive, parse_crtsh
 from collectors.dns_collector import DnsCollector, analyse_dmarc, analyse_spf
-from collectors.hibp_collector import HibpCollector
 from collectors.rdap_collector import RdapCollector, parse_rdap, parse_whois
 from collectors.username_collector import classify, load_sites
 from collectors import vt_collector
@@ -19,7 +18,7 @@ from collectors.vt_collector import VirusTotalCollector, url_id
 from conftest import FakeResponse
 
 CFG = {"USER_AGENT": "test", "HTTP_TIMEOUT": 2, "CRTSH_TIMEOUT": 2, "DNS_TIMEOUT": 2,
-       "HIBP_API_KEY": "", "VIRUSTOTAL_API_KEY": ""}
+       "VIRUSTOTAL_API_KEY": ""}
 
 
 # ------------------------------------------------------------ base contract
@@ -247,44 +246,6 @@ def test_crtsh_parsing_and_sensitive_names():
     assert is_sensitive("developer.acme.test", "acme.test") is None
     assert is_sensitive("www.acme.test", "acme.test") is None
 
-
-# --------------------------------------------------------------------- HIBP
-def test_hibp_requires_key_for_real_addresses():
-    result = HibpCollector(CFG).run("someone@example.com")
-    assert result.status == "skipped"
-
-
-def test_hibp_test_address_uses_test_key(monkeypatch):
-    collector = HibpCollector(CFG)
-    seen = {}
-
-    def fake_get(url, **kw):
-        seen["key"] = kw["headers"]["hibp-api-key"]
-        return FakeResponse(200, [
-            {"Name": "Adobe", "Title": "Adobe", "BreachDate": "2013-10-04", "IsVerified": True,
-             "DataClasses": ["Email addresses", "Passwords"], "Description": "<a>x</a> breach"},
-            {"Name": "Spam", "Title": "Spam list", "BreachDate": "2017-01-01", "IsSpamList": True,
-             "DataClasses": ["Email addresses"]},
-        ])
-
-    monkeypatch.setattr(collector, "http_get", fake_get)
-    result = collector.run("account-exists@hibp-integration-tests.com")
-    assert seen["key"] == "0" * 32
-    codes = [f.code for f in result.findings]
-    assert codes[0] == "HIBP_SUMMARY"
-    assert "HIBP_BREACH_PASSWORDS" in codes and "HIBP_BREACH_SPAMLIST" in codes
-    adobe = next(f for f in result.findings if f.code == "HIBP_BREACH_PASSWORDS")
-    assert adobe.details["description"] == "x breach"  # HTML stripped
-
-
-def test_hibp_404_and_429(monkeypatch):
-    collector = HibpCollector({**CFG, "HIBP_API_KEY": "k"})
-    monkeypatch.setattr(collector, "http_get", lambda u, **k: FakeResponse(404))
-    assert collector.run("a@b.test").findings[0].status == "not_found"
-    monkeypatch.setattr(collector, "http_get",
-                        lambda u, **k: FakeResponse(429, headers={"retry-after": "2"}))
-    res = collector.run("a@b.test")
-    assert res.status == "error" and "retry after 2" in res.error
 
 
 # --------------------------------------------------------------- VirusTotal
