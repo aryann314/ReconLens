@@ -31,7 +31,7 @@ B.E. Computer Science · Minor Discipline Course (MDC) Cybersecurity project.
 |---|---|---|
 | Domain intelligence | RDAP (IANA bootstrap) with WHOIS fallback, DNS, crt.sh, TLS certificate | No |
 | Username footprint | 19 public platforms (`collectors/sites.json`) | No |
-| Email exposure | XposedOrNot public API | Paid key, **or** the free official test key for test addresses |
+| Email exposure | XposedOrNot public API | No API key required |
 | IP / URL reputation | VirusTotal API v3 | Free community key |
 
 **Demo mode** works fully offline with fictional `.test` targets, so the project can be
@@ -97,7 +97,7 @@ it (the server also enforces this). Only analyse assets you own or are authorise
 |---|---|
 | Your own domain, or `example.com` (reserved for documentation, RFC 2606) | Nothing |
 | Your own username | Nothing |
-| Your own email address | No API key required; only check addresses you own or are authorised to assess |
+| Your own authorised email address | No API key required |
 
 | Any public domain / IP / URL reputation | `VIRUSTOTAL_API_KEY` (free account at virustotal.com) in `.env` |
 
@@ -223,7 +223,7 @@ No changes are needed in the database, UI or reports.
 | Live domain scan: crt.sh "busy or unavailable" | crt.sh is often overloaded - retry after a minute; other sources still work |
 | Every DNS record type fails | Check internet/DNS; on college Wi-Fi a captive portal may block DNS |
 | Username results all "inconclusive" | The network or platforms are blocking automated requests; that is reported honestly |
-| Email live checks | No API key is required; only assess addresses you are authorised to check |
+| Email live checks | No API key required; only assess addresses you are authorised to check |
 | `429 Too many requests` | Rate limit reached (default 10 scans/minute) - wait a minute |
 | Charts missing | Make sure `static/js/vendor/chart.umd.min.js` exists |
 | Want a fresh database | Stop the app and delete `database/osint.db` |
@@ -235,7 +235,7 @@ No changes are needed in the database, UI or reports.
       overview charts have data.
 - [ ] Keep the switch on **Demo data** unless the venue has reliable internet.
 - [ ] For a live moment, use `example.com` (domain) and
-      `an email address you own or are authorised to assess` (email).
+      `your-authorised-address@your-domain.example` (email).
 - [ ] Have one PDF report already downloaded as a backup.
 
 ## 10. Credits and licences
