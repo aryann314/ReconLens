@@ -67,7 +67,7 @@ and tells you *what to do* about it.
 |---|---|---|---|
 | **Domain intelligence** | `example.com` | RDAP (WHOIS backup), DNS, crt.sh, TLS certificate | Registrar, age, expiry, transfer lock, DNSSEC, hosting IPs, mail servers, SPF/DMARC, CAA, SaaS tools used, subdomains, HTTPS certificate health |
 | **Username footprint** | `demo_analyst` | 19 public platforms (GitHub, GitLab, Reddit, PyPI, Chess.com …) | Where the same handle exists; whether it is reused |
-| **Email exposure** | `alice@company.com` | Have I Been Pwned (HIBP) | Which breaches leaked the address and what data leaked |
+| **Email exposure** | `alice@company.com` | XposedOrNot (XposedOrNot) | Which breaches leaked the address and what data leaked |
 | **IP / URL reputation** | `1.2.3.4` or `https://…` | VirusTotal | How many security vendors flag it as malicious |
 
 On top of the modules:
@@ -178,7 +178,7 @@ The backend is built in **layers**. Each layer has one job and only talks to the
  └──────────────┬───────────────────┘   └───────────────────────────────┘
  ┌──────────────▼───────────────────────────────────────────────────────┐
  │  PUBLIC SOURCES: RDAP/WHOIS · DNS · crt.sh · TLS · 19 platforms ·     │
- │                  Have I Been Pwned · VirusTotal   (or demo data)      │
+ │                  XposedOrNot · VirusTotal   (or demo data)      │
  └──────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -225,7 +225,7 @@ Example: you scan the demo domain **`demo-corp.test`**.
 ### 9.2 `config.py` and `.env` - the settings
 
 All settings come from a `.env` file, so secrets like API keys are **never written in the
-code**. Examples: `HIBP_API_KEY`, `VIRUSTOTAL_API_KEY`, `ALLOW_LIVE_MODE`,
+code**. Examples: ``, `VIRUSTOTAL_API_KEY`, `ALLOW_LIVE_MODE`,
 `SCAN_RATE_LIMIT=10 per minute`, `RETENTION_DAYS=30`, timeouts.
 
 ### 9.3 Routes - the API (the reception desk)
@@ -318,7 +318,7 @@ collected_at 2026-10-27T10:15:00+00:00   ← when
 | **crt.sh** (`crtsh_collector.py`) | Searches public certificate logs for `%.domain`. | Subdomain list; *sensitive-looking* names like `dev.`, `vpn.`, `admin.`; wildcard certificates; certificate authorities |
 | **TLS** (`tls_collector.py`) | Makes **one** normal HTTPS handshake (like a browser) and reads the certificate. Refuses private IPs. | Issuer, valid until, expired, expires within 14 days, untrusted (self-signed) |
 | **Username** (`username_collector.py`) | Visits the public profile URL on 19 platforms (6 at a time). 200 = found, 404 = not found, 403/429/CAPTCHA/login page = inconclusive. | Profile found on GitHub…; "same username reused on many platforms" (5+) |
-| **HIBP** (`hibp_collector.py`) | Calls Have I Been Pwned API v3 with the email. | Each breach, date, leaked data types; passwords leaked = high |
+| **XposedOrNot** (`xposedornot_collector.py`) | Calls XposedOrNot API v3 with the email. | Each breach, date, leaked data types; passwords leaked = high |
 | **VirusTotal** (`vt_collector.py`) | Reads the **existing** report for a domain/IP/URL. Never submits new URLs (that would make them public). Local guard keeps to 4 requests/minute. | Malicious by 7 of 92 engines, suspicious, clean, vendor categories |
 
 **Demo mode** (`collectors/demo_data.py`) returns realistic but **fictional** results for
@@ -368,7 +368,7 @@ A rule table maps each problem code to a fix and a priority (High / Medium / Low
 |---|---|
 | `DNS_DMARC_MISSING` | Publish a DMARC policy (start with `p=none`, then move to `p=reject`) |
 | `TLS_EXPIRY_SOON` | Renew the certificate and automate renewal (e.g. Let's Encrypt) |
-| `HIBP_BREACH_PASSWORDS` | Change the leaked password everywhere it was reused; use a password manager |
+| `XON_BREACH` | Change the leaked password everywhere it was reused; use a password manager |
 | `USERNAME_REUSE` | Use different handles for professional and personal accounts |
 | `VT_MALICIOUS` | Do not visit or enter credentials; investigate |
 
@@ -431,7 +431,7 @@ SQLite, two tables, one-to-many:
 | Internet needed | No | Yes |
 | Allowed targets | Only the fictional demo targets (`.test`) | Any valid target |
 | Extra step | None | Must tick the **authorisation statement** (checked by the server, saved with the scan) |
-| Best for | Classroom, viva | Your own domain, `example.com`, HIBP test addresses |
+| Best for | Classroom, viva | Your own domain, `example.com`, XposedOrNot test addresses |
 
 Demo targets: `demo-corp.test` (weak), `secure-shop.test` (strong), `demo_analyst`,
 `ghost_user_404`, `alice@demo-corp.test`, `bob@secure-shop.test`,
@@ -451,7 +451,7 @@ Demo targets: `demo-corp.test` (weak), `secure-shop.test` (strong), `demo_analys
 | Clickjacking / sniffing | `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`. |
 | Too many requests | Rate limits (10 scans/minute; 1000 page/API requests/hour); VirusTotal quota guard. |
 | Leaking API keys | Keys only in `.env` (not in code, logs or reports). |
-| Privacy of email addresses | Sent only to HIBP; masked in database, logs, reports. |
+| Privacy of email addresses | Sent only to XposedOrNot; masked in database, logs, reports. |
 | Keeping data too long | 30-day retention, delete button, raw WHOIS never stored. |
 | Exposure of the app itself | Server listens on `127.0.0.1` only. |
 
@@ -467,7 +467,7 @@ so they cannot be skipped by someone using the API directly."*
 - What they cover:
   - input validation (good and bad inputs, injection attempts)
   - every collector's interpretation rules (SPF, DMARC, RDAP dates, username status codes,
-    HIBP, VirusTotal, TLS expiry)
+    XposedOrNot, VirusTotal, TLS expiry)
   - safeguards (authorisation required, demo-only targets, private IPs blocked, email masking,
     rate limits, CSV injection)
   - the full API, database, reports, graph and correlation
@@ -481,9 +481,9 @@ so they cannot be skipped by someone using the API directly."*
 - Only the 19 listed platforms are checked; a matching username does not prove it is the same person.
 - Certificate logs show **past** certificates - a subdomain may be offline now.
 - Registration data is often hidden for privacy (GDPR) - we label it, we do not guess.
-- HIBP only knows breaches it has loaded; "not found" ≠ "never leaked".
+- XposedOrNot only knows breaches it has loaded; "not found" ≠ "never leaked".
 - VirusTotal is vendor opinion, not proof; the free key allows 4 requests/minute.
-- Email checks of real addresses need a paid HIBP key (test addresses are free).
+- Email checks of real addresses need a paid XposedOrNot key (test addresses are free).
 - Single-user, local prototype (SQLite, in-memory rate limiter).
 
 ## 14. Future scope

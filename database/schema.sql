@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS scans (
 CREATE TABLE IF NOT EXISTS findings (
     id            INTEGER PRIMARY KEY AUTOINCREMENT,
     scan_id       INTEGER NOT NULL REFERENCES scans(id) ON DELETE CASCADE,
-    module        TEXT    NOT NULL,            -- e.g. dns, rdap, crtsh, username, hibp, virustotal
+    module        TEXT    NOT NULL,            -- e.g. dns, rdap, crtsh, username, xposedornot, virustotal
     source        TEXT    NOT NULL,            -- human-readable data source
     code          TEXT    NOT NULL,            -- machine code used for scoring & recommendations
     title         TEXT    NOT NULL,

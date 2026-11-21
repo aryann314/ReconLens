@@ -1,7 +1,7 @@
 """
 collectors/base.py - The common contract every OSINT source follows.
 
-Why this matters: every collector (RDAP, DNS, crt.sh, usernames, HIBP,
+Why this matters: every collector (RDAP, DNS, crt.sh, usernames, XposedOrNot,
 VirusTotal) returns findings in ONE shared format. The rest of the app
 (scoring, recommendations, database, reports, UI) only understands this
 format, so adding a new OSINT source means writing one new collector class -

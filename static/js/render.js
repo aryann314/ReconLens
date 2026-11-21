@@ -12,7 +12,7 @@ const Render = (() => {
   const MODULE_TITLE = {
     rdap: "Registration data (RDAP / WHOIS)", dns: "DNS records and email security",
     crtsh: "Certificate transparency", tls: "TLS certificate", username: "Platform profiles",
-    hibp: "Breach exposure", virustotal: "Vendor reputation",
+    xposedornot: "Breach exposure", virustotal: "Vendor reputation",
   };
 
   /* ---------------------------------------------------- exposure gauge */

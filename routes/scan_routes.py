@@ -1,21 +1,9 @@
-"""
-routes/scan_routes.py - Read/delete stored scans, statistics, health.
-
-    GET    /api/health              server status and which API keys are configured
-    GET    /api/demo-targets        fictional targets usable in demo mode
-    GET    /api/scans?limit=&type=  scan history (newest first)
-    GET    /api/scans/<id>          one scan with all findings
-    DELETE /api/scans/<id>          delete a scan (data minimisation)
-    GET    /api/stats               aggregate numbers for the dashboard charts
-    GET    /api/scans/<id>/graph    relationship graph of one scan
-    GET    /api/graph?limit=&ids=   correlated investigation graph across stored scans
-"""
+"""Read, delete and report stored scans, health and dashboard statistics."""
 from flask import Blueprint, current_app, jsonify, request
 
 from collectors.demo_data import DEMO_TARGETS
 from database.db import delete_scan, get_scan, get_stats, list_scans
 from services.graph import build_case_graph, build_graph
-
 from .common import ApiError
 
 bp = Blueprint("scan_api", __name__, url_prefix="/api")
@@ -27,7 +15,6 @@ def health():
     return jsonify({
         "ok": True,
         "live_mode_allowed": cfg["ALLOW_LIVE_MODE"],
-        "hibp_key_configured": bool(cfg["HIBP_API_KEY"]),
         "virustotal_key_configured": bool(cfg["VIRUSTOTAL_API_KEY"]),
         "retention_days": cfg["RETENTION_DAYS"],
         "scan_rate_limit": cfg["SCAN_RATE_LIMIT"],

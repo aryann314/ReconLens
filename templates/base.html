@@ -11,7 +11,6 @@
 </head>
 <body data-page="{{ page }}"
       data-live-allowed="{{ 'true' if live_allowed else 'false' }}"
-      data-hibp="{{ 'true' if hibp_configured else 'false' }}"
       data-vt="{{ 'true' if vt_configured else 'false' }}"
       {% if scan_id %}data-scan-id="{{ scan_id }}"{% endif %}
       {% if scan_type %}data-scan-type="{{ scan_type }}"{% endif %}>
@@ -63,7 +62,7 @@
               <span><b>Username footprint</b><small>One handle across 19 public platforms</small></span></a>
             <a href="{{ url_for('pages.email') }}" {% if page == 'email' %}aria-current="page"{% endif %}>
               <span class="nav-menu-ic">{{ icon('email') }}</span>
-              <span><b>Email exposure</b><small>Known breaches via Have I Been Pwned</small></span></a>
+              <span><b>Email exposure</b><small>Breach records indexed by XposedOrNot</small></span></a>
             <a href="{{ url_for('pages.reputation') }}" {% if page == 'reputation' %}aria-current="page"{% endif %}>
               <span class="nav-menu-ic">{{ icon('reputation') }}</span>
               <span><b>IP &amp; URL reputation</b><small>Security-vendor verdicts from VirusTotal</small></span></a>
@@ -147,7 +146,7 @@
     </div>
     <div class="container footer-base">
       <span>© ReconLens · Academic prototype</span>
-      <span>Data from RDAP/WHOIS, DNS, crt.sh, Have I Been Pwned and VirusTotal is subject to each provider's terms.</span>
+      <span>Data from RDAP/WHOIS, DNS, crt.sh, XposedOrNot and VirusTotal is subject to each provider's terms.</span>
     </div>
   </footer>
   <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>

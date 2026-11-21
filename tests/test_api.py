@@ -84,13 +84,18 @@ def test_live_domain_scan_with_mocked_collectors(client, monkeypatch):
     assert "example.com" in s["authorization"]
 
 
-def test_live_email_policies(app, client):
-    r = scan(client, "email", "me@example.com", mode="live", authorized=True)
-    assert r.get_json()["error"]["code"] == "hibp_key_missing"
-    app.config["HIBP_API_KEY"] = "k"
+def test_live_email_domain_policy(app, client, monkeypatch):
     app.config["AUTHORIZED_EMAIL_DOMAINS"] = ["mycollege.edu"]
     r = scan(client, "email", "me@example.com", mode="live", authorized=True)
     assert r.status_code == 403 and r.get_json()["error"]["code"] == "domain_not_authorised"
+
+    def fake_run(scan_type, target, config):
+        return [CollectorResult(module="xposedornot", source="XposedOrNot", status="error",
+                                error="mocked upstream response")]
+
+    monkeypatch.setattr(scan_service, "run_collectors", fake_run)
+    r = scan(client, "email", "me@mycollege.edu", mode="live", authorized=True)
+    assert r.status_code == 201
 
 
 def test_live_reputation_needs_key(client):
@@ -181,12 +186,15 @@ def test_auto_scan_runs_the_detected_module(client, scan_type, target):
     assert r.get_json()["scan"]["scan_type"] == scan_type
 
 
-def test_auto_scan_keeps_every_safeguard(client):
+def test_auto_scan_keeps_every_safeguard(client, monkeypatch):
+    monkeypatch.setattr(scan_service, "run_collectors", lambda *args: [
+        CollectorResult(module="xposedornot", source="XposedOrNot", status="error",
+                        error="mocked upstream response")])
     r = client.post("/api/scan/auto", json={"target": "example.com", "mode": "live"})
     assert r.get_json()["error"]["code"] == "authorization_required"
     r = client.post("/api/scan/auto", json={"target": "someone@gmail.com", "mode": "live",
                                             "authorized": True})
-    assert r.get_json()["error"]["code"] == "hibp_key_missing"
+    assert r.status_code == 201
     r = client.post("/api/scan/auto", json={"target": "8.8.8.8", "mode": "live",
                                             "authorized": True})
     assert r.get_json()["error"]["code"] == "virustotal_key_missing"

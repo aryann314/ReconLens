@@ -83,17 +83,11 @@ RULES = {
     "USERNAME_FOUND": ("Review privacy settings on accounts you own",
                        "For each confirmed profile: check what is public, delete dormant "
                        "accounts, and enable multi-factor authentication.", "Low"),
-    # ---------------- breaches
-    "HIBP_BREACH_PASSWORDS": ("Change passwords exposed in breaches",
-                              "Change the password on the breached service AND anywhere it was "
-                              "reused. Use a password manager to give each site a unique "
-                              "password.", "High"),
-    "HIBP_BREACH": ("Watch for targeted phishing",
-                    "Breached personal data (names, phone numbers, addresses) is used to craft "
-                    "convincing phishing messages. Verify unexpected requests.", "Medium"),
-    "HIBP_BREACH_SPAMLIST": ("Expect spam and filter aggressively",
-                             "The address is on a spam list. Use filtering rules and consider "
-                             "email aliases for sign-ups.", "Low"),
+    # ---------------- breach exposure
+    "XON_BREACH": ("Review breach details and watch for phishing",
+                    "XposedOrNot reports this address in a breach. Verify the affected service, "
+                    "change any reused credentials there, and treat unexpected messages cautiously.",
+                    "Medium"),
     # ---------------- reputation
     "VT_MALICIOUS": ("Investigate the flagged target before trusting it",
                      "Do not visit or enter credentials. If it is YOUR asset, check for "
@@ -123,7 +117,7 @@ BASELINE = {
         ("Enable MFA on your email account first",
          "Your mailbox can reset every other account you own."),
         ("Subscribe to breach notifications",
-         "HIBP offers free notifications for your own address."),
+         "XposedOrNot provides breach lookup for addresses you are authorised to check."),
     ],
     "reputation": [
         ("Corroborate reputation with multiple sources",

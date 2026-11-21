@@ -4,12 +4,11 @@
 {% block hero %}{% endblock %}
 {% block content %}
 {% call scan_form("email", "Email address", "name@example.com",
-    ("A paid HIBP key is configured: you may check addresses you own or are authorised to assess."
-     if hibp_configured else
-     "No HIBP key configured: live mode accepts HIBP's official test addresses, e.g. account-exists@hibp-integration-tests.com"),
-    "Have I Been Pwned API v3") %}
-  Whether an address appears in known data breaches and which kinds of data were exposed.
-  The full address is sent only to Have I Been Pwned; this app stores it masked.
+    "No API key is needed. Only check addresses you own or are authorised to assess.",
+    "XposedOrNot breach database") %}
+  Check whether an address appears in breach records indexed by XposedOrNot.
+  A missing result does not guarantee that the address was never exposed.
+  The address is sent to XposedOrNot over HTTPS; this app stores it masked.
 {% endcall %}
 {% endblock %}
 {% block scripts %}<script src="{{ url_for('static', filename='js/scan_form.js') }}"></script>{% endblock %}

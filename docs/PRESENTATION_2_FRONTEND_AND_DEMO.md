@@ -351,8 +351,8 @@ empty history, start `run.bat`, keep the switch on **Demo**, keep one PDF downlo
 | 7:00 | Open **Method & ethics** | "Passive only, honest labels, transparent score, privacy by design." |
 
 **If the internet works and you want one live moment:** Live mode → Domain → `example.com`
-(reserved for documentation) or Email → `account-exists@hibp-integration-tests.com`
-(HIBP's official test address). Tick the statement and run.
+(reserved for documentation) or Email → `account-exists@your-domain.example`
+(XposedOrNot's official test address). Tick the statement and run.
 
 ---
 
