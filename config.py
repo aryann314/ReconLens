@@ -36,6 +36,7 @@ class Config:
     SECRET_KEY = os.getenv("SECRET_KEY") or os.urandom(32).hex()
     ALLOW_LIVE_MODE = _bool("ALLOW_LIVE_MODE", True)
     VIRUSTOTAL_API_KEY = os.getenv("VIRUSTOTAL_API_KEY", "").strip()
+    ABUSEIPDB_API_KEY = os.getenv("ABUSEIPDB_API_KEY", "").strip()
     URLHAUS_AUTH_KEY = os.getenv("URLHAUS_AUTH_KEY", "").strip()
     AUTHORIZED_EMAIL_DOMAINS = _list("AUTHORIZED_EMAIL_DOMAINS")
 
