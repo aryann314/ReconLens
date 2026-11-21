@@ -252,20 +252,20 @@ def _username(target: str) -> list[CollectorResult]:
 
 # ------------------------------------------------------------------- email
 def _email(target: str) -> list[CollectorResult]:
-    m, s = "hibp", "Have I Been Pwned"
+    m, s = "xposedornot", "XposedOrNot"
     if target.startswith("bob@"):
         return [_result(m, s, [_f(
-            m, s, "HIBP_NO_BREACH", "Not found in any known breach",
-            "HIBP has no breach records for this address. This does not guarantee the address "
-            "was never exposed - only that HIBP holds no record of it.", "not_found",
-            url="https://haveibeenpwned.com/")], 480)]
+            m, s, "XON_NO_BREACH", "Not found in any known breach",
+            "XposedOrNot has no breach records for this address. This does not guarantee the address "
+            "was never exposed - only that XposedOrNot holds no record of it.", "not_found",
+            url="https://xposedornot.com/")], 480)]
     breaches = [
         ("DemoForum", "2021-06-14", ["Email addresses", "Passwords", "Usernames", "IP addresses"],
-         "HIBP_BREACH_PASSWORDS", "high"),
+         "XON_BREACH", "high"),
         ("ShopSample", "2019-11-02", ["Email addresses", "Names", "Phone numbers",
-                                      "Physical addresses"], "HIBP_BREACH", "medium"),
+                                      "Physical addresses"], "XON_BREACH", "medium"),
         ("MarketingList", "2018-03-20", ["Email addresses", "Names"],
-         "HIBP_BREACH_SPAMLIST", "low"),
+         "XON_BREACH", "low"),
     ]
     rows, findings, classes = [], [], set()
     for name, date, dc, code, sev in breaches:
@@ -274,12 +274,12 @@ def _email(target: str) -> list[CollectorResult]:
                      "spam list" if code.endswith("SPAMLIST") else "verified"])
         findings.append(_f(m, s, code, f"Breach: {name} (fictional)",
                            f"Breached {date}. Data exposed: {', '.join(dc)}", severity=sev,
-                           url="https://haveibeenpwned.com/",
+                           url="https://xposedornot.com/",
                            details={"breach_date": date, "data_classes": dc, "verified": True,
                                     "description": "Fictional breach used for demonstration."}))
-    findings.insert(0, _f(m, s, "HIBP_SUMMARY", "Address appears in 3 known breach(es)",
+    findings.insert(0, _f(m, s, "XON_BREACH_SUMMARY", "Address appears in 3 known breach(es)",
                           "Exposed data types: " + ", ".join(sorted(classes)),
-                          url="https://haveibeenpwned.com/",
+                          url="https://xposedornot.com/",
                           details={"table": {"columns": ["Breach", "Date", "Data classes", "Flags"],
                                              "rows": rows}}))
     return [_result(m, s, findings, 520)]
