@@ -78,7 +78,6 @@ Header `Content-Type: application/json` is **required** (otherwise HTTP 415).
 | 400 | `bad_mode` | mode not demo/live |
 | 400 | `invalid_input` | validation failed |
 | 400 | `not_a_demo_target` | demo mode with a non-demo target (response includes `demo_targets`) |
-| 400 | `hibp_key_missing` | live email check of a non-test address without `HIBP_API_KEY` |
 | 400 | `virustotal_key_missing` | live reputation check without `VIRUSTOTAL_API_KEY` |
 | 400 | `undetectable_target` | `/api/scan/auto`: the value is not domain-, email-, IP/URL- or username-shaped |
 | 403 | `authorization_required` | live mode without `"authorized": true` |
@@ -104,7 +103,7 @@ Failures of an individual OSINT source are **not** HTTP errors: the scan still r
 | GET | `/api/scans/<id>/report.pdf` | PDF report (attachment) |
 | GET | `/api/scans/<id>/report.csv` | CSV report (UTF-8 with BOM for Excel) |
 | GET | `/api/stats` | `total_scans`, `average_score`, `scans_by_type`, `scans_by_level`, `findings_by_status` |
-| GET | `/api/health` | `live_mode_allowed`, `hibp_key_configured`, `virustotal_key_configured`, `retention_days`, `scan_rate_limit` |
+| GET | `/api/health` | `live_mode_allowed`, `virustotal_key_configured`, `retention_days`, `scan_rate_limit` |
 | GET | `/api/demo-targets` | Fictional demo targets per scan type |
 
 ## Smart search endpoints
@@ -131,7 +130,7 @@ For emails `normalised` is always `null` so the address is never echoed back.
 
 Same body and response as the scan endpoints (`target`, `mode`, `authorized`); the detected
 module runs with **all** of its usual safeguards (validation, demo-target check,
-authorisation, HIBP/VirusTotal policies, `SCAN_RATE_LIMIT`). In demo mode a domain-shaped
+authorisation, XposedOrNot/VirusTotal policies, `SCAN_RATE_LIMIT`). In demo mode a domain-shaped
 value that is only a reputation demo target (`phish-login.demo-corp.test`) runs the
 reputation module. The response's `scan.scan_type` shows which module ran.
 
@@ -152,7 +151,7 @@ curl -X POST http://127.0.0.1:5000/api/scan/auto -H "Content-Type: application/j
 | dns | `DNS_RECORDS`, `DNS_HOST_IPS`, `DNS_MX`, `DNS_NO_MX`, `DNS_TXT_SERVICES`, `DNS_SPF_MISSING`, `DNS_SPF_MULTIPLE`, `DNS_SPF_PERMISSIVE`, `DNS_SPF_NEUTRAL`, `DNS_SPF_OK`, `DNS_DMARC_MISSING`, `DNS_DMARC_MONITOR`, `DNS_DMARC_OK`, `DNS_DMARC_UNKNOWN`, `DNS_CAA_MISSING`, `DNS_CAA_OK`, `DNS_PARTIAL`, `DNS_NXDOMAIN` |
 | crtsh | `CRTSH_SUBDOMAINS`, `CRTSH_SENSITIVE_SUBDOMAINS`, `CRTSH_WILDCARD`, `CRTSH_ISSUERS`, `CRTSH_NONE`, `CRTSH_TOO_LARGE` |
 | username | `USERNAME_FOUND`, `USERNAME_NOT_FOUND`, `USERNAME_INCONCLUSIVE`, `USERNAME_REUSE` |
-| hibp | `HIBP_SUMMARY`, `HIBP_BREACH`, `HIBP_BREACH_PASSWORDS`, `HIBP_BREACH_SPAMLIST`, `HIBP_NO_BREACH` |
+| xposedornot | `XON_BREACH_SUMMARY`, `XON_BREACH`, `XON_BREACH`, `XON_BREACH`, `XON_NO_BREACH` |
 | tls | `TLS_CERT`, `TLS_EXPIRY_SOON`, `TLS_EXPIRED`, `TLS_UNTRUSTED`, `TLS_HANDSHAKE_FAILED`, `TLS_NO_HTTPS` |
 | virustotal | `VT_MALICIOUS`, `VT_SUSPICIOUS`, `VT_CLEAN`, `VT_STATS`, `VT_COMMUNITY_SCORE`, `VT_CATEGORIES`, `VT_NETWORK`, `VT_NOT_FOUND` |
 | any | `<MODULE>_ERROR` - the source could not be queried |
