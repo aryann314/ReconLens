@@ -110,9 +110,7 @@ venv\Scripts\activate
 python -m pytest -v
 ```
 
-or double-click `run_tests.bat`. The suite (132 tests) uses mocked network responses, so it
-needs no internet and never queries real targets. Expected last line:
-`132 passed in ...s`.
+or double-click `run_tests.bat`. The suite uses mocked network responses, so it needs no internet and never queries real targets. Expected result: all tests pass.
 
 ## 5. Project structure
 
