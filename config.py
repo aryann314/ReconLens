@@ -32,22 +32,12 @@ def _list(name: str) -> list[str]:
     return [item.strip().lower() for item in raw.split(",") if item.strip()]
 
 
-# HIBP publishes this all-zero key for integration testing. It only returns
-# data for addresses on the hibp-integration-tests.com domain.
-HIBP_TEST_KEY = "00000000000000000000000000000000"
-HIBP_TEST_DOMAIN = "hibp-integration-tests.com"
-
-
 class Config:
     SECRET_KEY = os.getenv("SECRET_KEY") or os.urandom(32).hex()
-
     ALLOW_LIVE_MODE = _bool("ALLOW_LIVE_MODE", True)
-
-    HIBP_API_KEY = os.getenv("HIBP_API_KEY", "").strip()
     VIRUSTOTAL_API_KEY = os.getenv("VIRUSTOTAL_API_KEY", "").strip()
     URLHAUS_AUTH_KEY = os.getenv("URLHAUS_AUTH_KEY", "").strip()
-    AUTHORIZED_EMAIL_DOMAINS = _list("AUTHORIZED_EMAIL_DOMAINS"
-    
+    AUTHORIZED_EMAIL_DOMAINS = _list("AUTHORIZED_EMAIL_DOMAINS")
 
     USER_AGENT = os.getenv(
         "OSINT_USER_AGENT", "OSINT-Footprint-Dashboard/1.0 (academic project)"
@@ -60,11 +50,8 @@ class Config:
     # Pages and read-only API calls (one overview page load = 5 requests)
     DEFAULT_RATE_LIMIT = os.getenv("DEFAULT_RATE_LIMIT", "1000 per hour")
     RETENTION_DAYS = _int("RETENTION_DAYS", 30)
-
     DATABASE_PATH = os.getenv("DATABASE_PATH", str(BASE_DIR / "database" / "osint.db"))
     LOG_DIR = BASE_DIR / "logs"
-
-    # Reject request bodies larger than 16 KB (inputs are tiny)
     MAX_CONTENT_LENGTH = 16 * 1024
     JSON_SORT_KEYS = False
 
