@@ -83,17 +83,11 @@ RULES = {
     "USERNAME_FOUND": ("Review privacy settings on accounts you own",
                        "For each confirmed profile: check what is public, delete dormant "
                        "accounts, and enable multi-factor authentication.", "Low"),
-    # ---------------- breaches
-    "XON_BREACH": ("Change passwords exposed in breaches",
-                              "Change the password on the breached service AND anywhere it was "
-                              "reused. Use a password manager to give each site a unique "
-                              "password.", "High"),
-    "XON_BREACH": ("Watch for targeted phishing",
-                    "Breached personal data (names, phone numbers, addresses) is used to craft "
-                    "convincing phishing messages. Verify unexpected requests.", "Medium"),
-    "XON_BREACH": ("Expect spam and filter aggressively",
-                             "The address is on a spam list. Use filtering rules and consider "
-                             "email aliases for sign-ups.", "Low"),
+    # ---------------- breach exposure
+    "XON_BREACH": ("Review breach details and watch for phishing",
+                    "XposedOrNot reports this address in a breach. Verify the affected service, "
+                    "change any reused credentials there, and treat unexpected messages cautiously.",
+                    "Medium"),
     # ---------------- reputation
     "VT_MALICIOUS": ("Investigate the flagged target before trusting it",
                      "Do not visit or enter credentials. If it is YOUR asset, check for "
