@@ -15,7 +15,7 @@ flowchart TB
     C2["DNS<br/>collector"]
     C3["crt.sh<br/>collector"]
     C4["Username<br/>collector"]
-    C5["HIBP<br/>collector"]
+    C5["XposedOrNot<br/>collector"]
     C6["VirusTotal<br/>collector"]
     D["Demo fixtures<br/>(fictional data)"]
     SC["Scoring +<br/>recommendations"]
@@ -25,7 +25,7 @@ flowchart TB
     E2["DNS resolvers"]:::ext
     E3["crt.sh"]:::ext
     E4["Public profile<br/>pages / APIs"]:::ext
-    E5["Have I Been Pwned"]:::ext
+    E5["XposedOrNot"]:::ext
     E6["VirusTotal"]:::ext
 
     UI -- "JSON over HTTP" --> R
@@ -140,7 +140,7 @@ flowchart TB
     end
     subgraph Collectors["collectors/"]
         BASE["base.py<br/>Finding · BaseCollector"]
-        COLS["rdap · dns · crtsh ·<br/>username · hibp · vt"]
+        COLS["rdap · dns · crtsh ·<br/>username · xposedornot · vt"]
         DEMO["demo_data.py"]
     end
     subgraph Data["database/"]
@@ -194,7 +194,7 @@ erDiagram
     FINDINGS {
         INTEGER id PK
         INTEGER scan_id FK
-        TEXT module "rdap, dns, crtsh, username, hibp, virustotal"
+        TEXT module "rdap, dns, crtsh, username, xposedornot, virustotal"
         TEXT source
         TEXT code "e.g. DNS_DMARC_MISSING"
         TEXT title
