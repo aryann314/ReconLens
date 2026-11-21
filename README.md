@@ -31,7 +31,7 @@ B.E. Computer Science · Minor Discipline Course (MDC) Cybersecurity project.
 |---|---|---|
 | Domain intelligence | RDAP (IANA bootstrap) with WHOIS fallback, DNS, crt.sh, TLS certificate | No |
 | Username footprint | 19 public platforms (`collectors/sites.json`) | No |
-| Email exposure | Have I Been Pwned API v3 | Paid key, **or** the free official test key for test addresses |
+| Email exposure | XposedOrNot public API | Paid key, **or** the free official test key for test addresses |
 | IP / URL reputation | VirusTotal API v3 | Free community key |
 
 **Demo mode** works fully offline with fictional `.test` targets, so the project can be
@@ -97,8 +97,8 @@ it (the server also enforces this). Only analyse assets you own or are authorise
 |---|---|
 | Your own domain, or `example.com` (reserved for documentation, RFC 2606) | Nothing |
 | Your own username | Nothing |
-| `account-exists@hibp-integration-tests.com`, `multiple-breaches@hibp-integration-tests.com` | Nothing - uses HIBP's official test key |
-| Your own email address | `HIBP_API_KEY` (paid) in `.env` |
+| Your own email address | No API key required; only check addresses you own or are authorised to assess |
+
 | Any public domain / IP / URL reputation | `VIRUSTOTAL_API_KEY` (free account at virustotal.com) in `.env` |
 
 After editing `.env`, stop the server (CTRL+C) and start it again.
@@ -134,7 +134,7 @@ osint-dashboard/
 │   ├── crtsh_collector.py    Certificate transparency subdomains
 │   ├── username_collector.py Username checks, confirmed / not found / inconclusive
 │   ├── sites.json            Curated platform list for username checks
-│   ├── hibp_collector.py     Have I Been Pwned breaches
+│   ├── xposedornot_collector.py XposedOrNot breach checks
 │   ├── vt_collector.py       VirusTotal reputation (+ local 4/min quota guard)
 │   ├── tls_collector.py      TLS certificate via one HTTPS handshake (SSRF-safe)
 │   └── demo_data.py          Fictional fixtures for safe demo mode
@@ -201,7 +201,7 @@ No changes are needed in the database, UI or reports.
 - Live mode needs an explicit, server-enforced authorisation statement per scan; it is stored
   with the scan as an audit trail. `ALLOW_LIVE_MODE=false` makes a demo-only deployment.
 - Demo mode uses only fictional data on the reserved `.test` TLD.
-- Email addresses are sent only to HIBP and are stored, logged and reported masked
+- Email addresses are sent only to XposedOrNot and are stored, logged and reported masked
   (`a***@domain`) - including the console access log, where page URLs could carry them. `AUTHORIZED_EMAIL_DOMAINS` can restrict live email checks to your organisation.
 - API keys only in `.env` (git-ignored); never in code, logs or reports.
 - Flask-Limiter rate limit on scan endpoints (`SCAN_RATE_LIMIT`) plus a general limit on
@@ -223,7 +223,7 @@ No changes are needed in the database, UI or reports.
 | Live domain scan: crt.sh "busy or unavailable" | crt.sh is often overloaded - retry after a minute; other sources still work |
 | Every DNS record type fails | Check internet/DNS; on college Wi-Fi a captive portal may block DNS |
 | Username results all "inconclusive" | The network or platforms are blocking automated requests; that is reported honestly |
-| Email live: "No HIBP API key is configured" | Use a `@hibp-integration-tests.com` test address, demo mode, or add a key |
+| Email live checks | No API key is required; only assess addresses you are authorised to check |
 | `429 Too many requests` | Rate limit reached (default 10 scans/minute) - wait a minute |
 | Charts missing | Make sure `static/js/vendor/chart.umd.min.js` exists |
 | Want a fresh database | Stop the app and delete `database/osint.db` |
@@ -235,12 +235,12 @@ No changes are needed in the database, UI or reports.
       overview charts have data.
 - [ ] Keep the switch on **Demo data** unless the venue has reliable internet.
 - [ ] For a live moment, use `example.com` (domain) and
-      `account-exists@hibp-integration-tests.com` (email).
+      `an email address you own or are authorised to assess` (email).
 - [ ] Have one PDF report already downloaded as a backup.
 
 ## 10. Credits and licences
 
 Chart.js (MIT), Cytoscape.js (MIT), Red Hat Display, Public Sans and IBM Plex Mono (SIL Open Font License), Flask, dnspython,
 requests, Flask-Limiter, python-dotenv, ReportLab. Username detection approach adapted
-from the open-source Sherlock project. Data from IANA/ICANN RDAP, crt.sh, Have I Been Pwned
+from the open-source Sherlock project. Data from IANA/ICANN RDAP, crt.sh, XposedOrNot
 and VirusTotal is subject to each provider's terms of use.
