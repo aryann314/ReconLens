@@ -134,7 +134,7 @@ class GraphBuilder:
         for f in findings:
             if f["severity"] in ("low", "medium", "high") and f["code"] not in (
                     "USERNAME_FOUND", "CRTSH_SENSITIVE_SUBDOMAINS", "VT_MALICIOUS", "VT_SUSPICIOUS") \
-                    and not f["code"].startswith("HIBP_BREACH"):
+                    and not f["code"].startswith("XON_BREACH"):
                 issue = self.node("issue", f"{target}:{f['code']}", f["title"],
                                   severity=f["severity"], detail=f.get("value") or "", scan_id=sid)
                 self.edge(root, issue, "risk")
@@ -213,7 +213,7 @@ class GraphBuilder:
         domain = target.split("@")[-1]
         self.edge(root, self.node("domain", domain, detail="Email domain", scan_id=sid),
                   "address at")
-        for code in ("HIBP_BREACH_PASSWORDS", "HIBP_BREACH", "HIBP_BREACH_SPAMLIST"):
+        for code in ("XON_BREACH", "XON_BREACH", "XON_BREACH"):
             for f in by_code.get(code, []):
                 d = f.get("details") or {}
                 name = f["title"].replace("Breach: ", "")
