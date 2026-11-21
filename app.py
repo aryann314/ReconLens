@@ -39,11 +39,7 @@ EMAIL_IN_TEXT = re.compile(
 
 
 class MaskEmailFilter(logging.Filter):
-    """Masks email addresses in log lines (alice@x.com -> a***@x.com).
-
-    The console access log prints request URLs, and a page URL such as
-    /email?target=alice%40example.com would otherwise reveal the full address.
-    """
+    """Masks email addresses in log lines (alice@x.com -> a***@x.com)."""
 
     def filter(self, record: logging.LogRecord) -> bool:
         message = record.getMessage()
@@ -85,12 +81,12 @@ def create_app(test_config: dict | None = None) -> Flask:
 
     @app.context_processor
     def inject_flags():
-       return {
-    "live_allowed": app.config["ALLOW_LIVE_MODE"],
-    "hibp_configured": bool(app.config["HIBP_API_KEY"]),
-    "vt_configured": bool(app.config["VIRUSTOTAL_API_KEY"]),
-    "urlhaus_configured": bool(app.config["URLHAUS_AUTH_KEY"]),
-}
+        return {
+            "live_allowed": app.config["ALLOW_LIVE_MODE"],
+            "vt_configured": bool(app.config["VIRUSTOTAL_API_KEY"]),
+            "urlhaus_configured": bool(app.config["URLHAUS_AUTH_KEY"]),
+        }
+
     @app.after_request
     def security_headers(resp):
         resp.headers["Content-Security-Policy"] = CSP
@@ -102,7 +98,6 @@ def create_app(test_config: dict | None = None) -> Flask:
             resp.headers["Cache-Control"] = "no-store"
         return resp
 
-    # ------------------------------------------------------ error handling
     @app.errorhandler(ApiError)
     def api_error(err: ApiError):
         return err.response()
