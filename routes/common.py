@@ -40,13 +40,14 @@ class ApiError(Exception):
 def scan_config() -> dict:
     """Plain-dict copy of the settings collectors need (they run in threads)."""
     keys = (
-    "USER_AGENT",
-    "HTTP_TIMEOUT",
-    "CRTSH_TIMEOUT",
-    "DNS_TIMEOUT",
-    "VIRUSTOTAL_API_KEY",
-    "URLHAUS_AUTH_KEY",
-)
+        "USER_AGENT",
+        "HTTP_TIMEOUT",
+        "CRTSH_TIMEOUT",
+        "DNS_TIMEOUT",
+        "VIRUSTOTAL_API_KEY",
+        "ABUSEIPDB_API_KEY",
+        "URLHAUS_AUTH_KEY",
+    )
     return {k: current_app.config.get(k) for k in keys}
 
 
@@ -62,26 +63,21 @@ def read_json_body() -> dict:
 
 def handle_scan(scan_type: str, live_policy=None):
     data = read_json_body()
-
     mode = data.get("mode", "demo")
     if mode not in ("demo", "live"):
         raise ApiError(400, "bad_mode", "mode must be 'demo' or 'live'.")
-
     try:
         target = VALIDATORS[scan_type](data.get("target"))
     except ValidationError as exc:
         raise ApiError(400, "invalid_input", str(exc), {"field": exc.field})
-
     authorization = None
     if mode == "demo":
         if target not in demo_targets_for(scan_type):
-            raise ApiError(400, "not_a_demo_target",
-                           "Demo mode only works with the fictional demo targets.",
+            raise ApiError(400, "not_a_demo_target", "Demo mode only works with the fictional demo targets.",
                            {"demo_targets": DEMO_TARGETS[scan_type]})
     else:
         if not current_app.config["ALLOW_LIVE_MODE"]:
-            raise ApiError(403, "live_disabled",
-                           "Live mode is disabled on this server (ALLOW_LIVE_MODE=false).")
+            raise ApiError(403, "live_disabled", "Live mode is disabled on this server (ALLOW_LIVE_MODE=false).")
         if data.get("authorized") is not True:
             raise ApiError(403, "authorization_required",
                            "Confirm that you own this asset or have permission to assess it.")
@@ -89,7 +85,6 @@ def handle_scan(scan_type: str, live_policy=None):
             live_policy(target)
         shown = mask_email(target) if scan_type == "email" else target
         authorization = AUTH_STATEMENT.format(target=shown)
-
     scan = run_scan(scan_type, target, mode, scan_config(), authorization)
     scan_id = save_scan(scan)
     current_app.logger.info(
